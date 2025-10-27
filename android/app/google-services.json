@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "259266095345",
+    "project_id": "do-an-food",
+    "storage_bucket": "do-an-food.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:259266095345:android:babb2f405baa1908f86150",
+        "android_client_info": {
+          "package_name": "com.example.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbLkOmsVU6WWPA0zi_MpBQAxHS4UNxzk4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:259266095345:android:3d40e19e31453eaef86150",
+        "android_client_info": {
+          "package_name": "com.example.do_an_food_moi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbLkOmsVU6WWPA0zi_MpBQAxHS4UNxzk4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
