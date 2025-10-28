@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // ignore: depend_on_referenced_packages
-import 'package:do_an_food_moi/main.dart';
+import 'package:do_an_quan_ao/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {

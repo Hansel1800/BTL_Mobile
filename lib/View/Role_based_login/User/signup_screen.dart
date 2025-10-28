@@ -1,7 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:do_an_food_moi/Services/auth_service.dart';
-import 'package:do_an_food_moi/View/Role_based_login/User/login_screen.dart';
+import 'package:do_an_quan_ao/Services/auth_service.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/login_screen.dart';
 import 'package:flutter/material.dart';
 
 class SignupScreen extends StatefulWidget {

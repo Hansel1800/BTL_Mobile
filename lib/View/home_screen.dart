@@ -1,5 +1,5 @@
-import 'package:do_an_food_moi/Services/auth_service.dart';
-import 'package:do_an_food_moi/View/Role_based_login/User/login_screen.dart';
+import 'package:do_an_quan_ao/Services/auth_service.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/login_screen.dart';
 import 'package:flutter/material.dart';
 
 final AuthService _authService = AuthService();
