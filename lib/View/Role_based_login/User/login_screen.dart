@@ -4,6 +4,7 @@ import 'package:do_an_quan_ao/View/home_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:do_an_quan_ao/Services/auth_service.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/Admin/admin_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -58,10 +59,11 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16), // Thêm const
-          child: Column(
-            children: [
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16), // Thêm const
+            child: Column(
+              children: [
               Image.asset("assets/images/20944201.jpg"),
               const SizedBox(height: 20),
               TextField(
@@ -138,6 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_quan_ao/Services/auth_service.dart';
 import 'package:do_an_quan_ao/View/home_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/Admin/admin_home_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -14,7 +17,7 @@ void main() async {
   final authService = AuthService();
   final checkResult = await authService.checkFirestoreConnection();
   debugPrint('Firestore check: $checkResult');
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -38,14 +41,16 @@ class AuthStateHandler extends StatefulWidget {
 class _AuthStateHandlerState extends State<AuthStateHandler> {
   User? _currentUser;
   String? _userRole;
+  StreamSubscription<User?>? _authSubscription;
 
-  void iniState() {
-    _initializeAuthState();
+  @override
+  void initState() {
     super.initState();
+    _initializeAuthState();
   }
 
   void _initializeAuthState() {
-    FirebaseAuth.instance.authStateChanges().listen((user) async {
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) async {
       if (!mounted) return;
       setState(() {
         _currentUser = user;
@@ -66,13 +71,28 @@ class _AuthStateHandlerState extends State<AuthStateHandler> {
   }
 
   @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    debugPrint('AuthStateHandler build - currentUser: ${_currentUser?.uid}, role: $_userRole');
+    
     if (_currentUser == null) {
+      debugPrint('Showing LoginScreen');
       return const LoginScreen();
     }
     if (_userRole == null) {
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
+      debugPrint('Showing loading indicator');
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
-    return _userRole == "Admin" ? AdminScreen() : UserScreen();
+    debugPrint('Showing ${_userRole == "Admin" ? "AdminScreen" : "UserScreen"}');
+    return _userRole == "Admin" ? const AdminScreen() : const UserScreen();
   }
 }
