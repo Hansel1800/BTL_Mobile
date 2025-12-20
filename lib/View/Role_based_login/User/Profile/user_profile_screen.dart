@@ -128,7 +128,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      phone.isNotEmpty ? '$phone · $email' : email,
+                      phone.isNotEmpty ? ' · $email' : email,
                       style: const TextStyle(color: Colors.grey, fontSize: 14),
                     ),
                   ],

@@ -21,7 +21,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
   late TextEditingController _categoryController;
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
-  late TextEditingController _originalPriceController;
+
   late TextEditingController _stockController;
   late TextEditingController _warningStockController;
   late TextEditingController _imageUrlController;
@@ -47,7 +47,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
     }
     _priceController = TextEditingController(text: priceText);
     
-    _originalPriceController = TextEditingController(); // Mock Original Price
+
     
     // Fix: Safely handle stock initialization
     String stockText = '';
@@ -84,7 +84,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
     _categoryController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
-    _originalPriceController.dispose();
+
     _stockController.dispose();
     _warningStockController.dispose();
     _imageUrlController.dispose();
@@ -92,36 +92,103 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
   }
 
   void _saveProduct() async {
-    if (_formKey.currentState!.validate()) {
-      final product = Product(
-        id: widget.product?.id ?? '',
-        name: _nameController.text,
-        category: _categoryController.text,
-        price: double.tryParse(_priceController.text) ?? 0.0,
-        imageUrl: _imageUrl ?? '',
-        stock: int.tryParse(_stockController.text) ?? 0,
-        colors: _selectedColors ?? [],
-        sizes: _selectedSizes ?? [],
-        gender: _selectedGender,
-        variants: _variants,
-        description: _descriptionController.text,
-      );
+    // 1. Validate Form Fields (Name, required text fields)
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-      try {
-        if (widget.product == null) {
-          await ref.read(productControllerProvider.notifier).addProduct(product);
-        } else {
-          await ref.read(productControllerProvider.notifier).updateProduct(product);
-        }
-        if (mounted) {
-          Navigator.pop(context);
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
-        }
+    // 2. Custom Validations
+
+    // Description validation
+    if (_descriptionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập mô tả sản phẩm'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // Category validation
+    if (_categoryController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn danh mục'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // Gender validation
+    if (_selectedGender.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn giới tính'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+    
+    // Image validation
+    if (_imageUrl == null || _imageUrl!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập URL hình ảnh'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // Sizes validation
+    if (_selectedSizes == null || _selectedSizes!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn ít nhất một size'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // Colors validation
+    if (_selectedColors == null || _selectedColors!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn ít nhất một màu sắc'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // Warning stock validation
+    final stock = int.tryParse(_stockController.text) ?? 0;
+    final warningStock = int.tryParse(_warningStockController.text) ?? 0;
+    
+    if (warningStock >= stock && stock > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cảnh báo tồn kho phải nhỏ hơn số lượng tồn kho'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    final product = Product(
+      id: widget.product?.id ?? '',
+      name: _nameController.text,
+      category: _categoryController.text,
+      price: double.tryParse(_priceController.text) ?? 0.0,
+      imageUrl: _imageUrl ?? '',
+      stock: stock,
+      colors: _selectedColors ?? [],
+      sizes: _selectedSizes ?? [],
+      gender: _selectedGender,
+      variants: _variants,
+      description: _descriptionController.text,
+    );
+
+    try {
+      if (widget.product == null) {
+        await ref.read(productControllerProvider.notifier).addProduct(product);
+      } else {
+        await ref.read(productControllerProvider.notifier).updateProduct(product);
+      }
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Lưu sản phẩm thành công'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -307,18 +374,28 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
           const SizedBox(height: 16),
            _buildTextField('Image URL', 'Điền đường dẫn ảnh', _imageUrlController, onChanged: (val) {
              setState(() {
-               _imageUrl = val;
+               _imageUrl = val.trim();
              });
            }),
-           if (_imageUrl != null && _imageUrl!.isNotEmpty)
+           if (_imageUrl != null && _imageUrl!.toLowerCase().startsWith('http'))
              Padding(
                padding: const EdgeInsets.only(top: 8.0),
                child: SizedBox(
                  height: 100,
-                 child: CachedNetworkImage(
-                   imageUrl: _imageUrl!,
-                   placeholder: (context, url) => const CircularProgressIndicator(),
-                   errorWidget: (context, url, error) => const Icon(Icons.error),
+                 child: Image.network(
+                   _imageUrl!,
+                   errorBuilder: (context, error, stackTrace) => const Column(
+                     mainAxisAlignment: MainAxisAlignment.center,
+                     children: [
+                       Icon(Icons.broken_image, color: Colors.grey),
+                       Text('Lỗi ảnh', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                     ],
+                   ),
+                   loadingBuilder: (context, child, loadingProgress) {
+                     if (loadingProgress == null) return child;
+                     return const Center(child: CircularProgressIndicator());
+                   },
+                   fit: BoxFit.contain,
                  ),
                ),
              ),
@@ -394,8 +471,6 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildTextField('Giá gốc (nếu có khuyến mãi)', '₫ 0', _originalPriceController, isNumber: true),
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 16),
@@ -585,52 +660,106 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
   void _showEditVariantDialog(String size, String color, ProductVariant? currentVariant) {
     final priceCtrl = TextEditingController(text: (currentVariant?.price ?? double.tryParse(_priceController.text) ?? 0).toStringAsFixed(0));
     final stockCtrl = TextEditingController(text: (currentVariant?.stock ?? int.tryParse(_stockController.text) ?? 0).toString());
+    final warningStockCtrl = TextEditingController(text: (currentVariant?.warningStock ?? int.tryParse(_warningStockController.text) ?? 0).toString());
+    final imageUrlCtrl = TextEditingController(text: currentVariant?.imageUrl ?? '');
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Size: $size - Màu: $color'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-             TextField(
-               controller: priceCtrl,
-               keyboardType: TextInputType.number,
-               decoration: const InputDecoration(labelText: 'Giá riêng'),
-             ),
-             TextField(
-               controller: stockCtrl,
-               keyboardType: TextInputType.number,
-               decoration: const InputDecoration(labelText: 'Tồn kho riêng'),
-             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          TextButton(
-            onPressed: () {
-              final newPrice = double.tryParse(priceCtrl.text) ?? 0;
-              final newStock = int.tryParse(stockCtrl.text) ?? 0;
-              
-              setState(() {
-                // Remove existing if present
-                _variants.removeWhere((v) => v.size == size && v.color == color);
-                // Add new/updated
-                _variants.add(ProductVariant(
-                  size: size, 
-                  color: color, 
-                  price: newPrice, 
-                  stock: newStock
-                ));
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Lưu'),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text('Size: $size - Màu: $color'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                   TextField(
+                     controller: priceCtrl,
+                     keyboardType: TextInputType.number,
+                     decoration: const InputDecoration(labelText: 'Giá riêng'),
+                   ),
+                   TextField(
+                     controller: stockCtrl,
+                     keyboardType: TextInputType.number,
+                     decoration: const InputDecoration(labelText: 'Tồn kho riêng'),
+                   ),
+                   TextField(
+                     controller: warningStockCtrl,
+                     keyboardType: TextInputType.number,
+                     decoration: const InputDecoration(labelText: 'Cảnh báo tồn kho'),
+                   ),
+                   TextField(
+                     controller: imageUrlCtrl,
+                     decoration: const InputDecoration(labelText: 'URL Ảnh riêng (tùy chọn)'),
+                     onChanged: (_) {
+                        setState(() {});
+                     },
+                   ),
+                   if (imageUrlCtrl.text.trim().toLowerCase().startsWith('http'))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: SizedBox(
+                          height: 100, 
+                          child: Image.network(
+                            imageUrlCtrl.text.trim(), 
+                            errorBuilder: (context, error, stackTrace) => const Column(
+                               mainAxisAlignment: MainAxisAlignment.center,
+                               children: [
+                                 Icon(Icons.broken_image, color: Colors.grey),
+                                 Text('Lỗi tải ảnh', style: TextStyle(fontSize: 10, color: Colors.grey))
+                               ],
+                            ),
+                            loadingBuilder: (context, child, loadingProgress) {
+                               if (loadingProgress == null) return child;
+                               return const Center(child: CircularProgressIndicator());
+                            },
+                            fit: BoxFit.contain,
+                          )
+                        ),
+                      )
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Hủy'),
+              ),
+              TextButton(
+                onPressed: () {
+                  final newPrice = double.tryParse(priceCtrl.text) ?? 0;
+                  final newStock = int.tryParse(stockCtrl.text) ?? 0;
+                  final newWarningStock = int.tryParse(warningStockCtrl.text) ?? 0;
+                  final newImageUrl = imageUrlCtrl.text;
+                  
+                  if (newWarningStock >= newStock && newStock > 0) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Cảnh báo tồn kho phải nhỏ hơn tồn kho'), backgroundColor: Colors.red),
+                     );
+                     return;
+                  }
+
+                  // Update parent state
+                  this.setState(() {
+                    // Remove existing if present
+                    _variants.removeWhere((v) => v.size == size && v.color == color);
+                    // Add new/updated
+                    _variants.add(ProductVariant(
+                      size: size, 
+                      color: color, 
+                      price: newPrice, 
+                      stock: newStock,
+                      warningStock: newWarningStock,
+                      imageUrl: newImageUrl.isEmpty ? null : newImageUrl,
+                    ));
+                  });
+                  Navigator.pop(context);
+                },
+                child: const Text('Lưu'),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
@@ -656,9 +785,15 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
+          onChanged: onChanged,
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           maxLines: maxLines,
-          onChanged: onChanged,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Vui lòng nhập ${label.toLowerCase()}';
+            }
+            return null;
+          },
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
@@ -720,7 +855,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
   final List<Map<String, String>> _allCategories = [
     {'title': 'Áo thun', 'subtitle': 'Áo phông, áo thun basic', 'section': 'suggested'},
     {'title': 'Sơ mi', 'subtitle': 'Sơ mi tay dài, tay ngắn', 'section': 'suggested'},
-    {'title': 'Quần jean', 'subtitle': 'Nam / Nữ', 'section': 'other'},
+    {'title': 'Quần', 'subtitle': 'Nam / Nữ', 'section': 'other'},
     {'title': 'Quần short', 'subtitle': 'Short kaki, short jean', 'section': 'other'},
     {'title': 'Đầm / Váy', 'subtitle': 'Váy liền, chân váy', 'section': 'other'},
     {'title': 'Phụ kiện', 'subtitle': 'Nón, dây lưng, túi xách', 'section': 'other'},

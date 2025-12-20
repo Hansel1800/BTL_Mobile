@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:do_an_quan_ao/ViewModel/cart_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/user_main_screen.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/Checkout/checkout_screen.dart';
 
 class UserCartScreen extends ConsumerWidget {
   const UserCartScreen({super.key});
@@ -216,18 +217,20 @@ class UserCartScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFC69C6D),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                             Navigator.push(context, MaterialPageRoute(builder: (context) => const CheckoutScreen()));
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC69C6D),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Thanh toán', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                         ),
-                        child: const Text('Thanh toán', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                       ),
-                    ),
                     const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,

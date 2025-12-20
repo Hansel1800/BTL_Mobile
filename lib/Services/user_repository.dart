@@ -11,6 +11,14 @@ class UserRepository {
     });
   }
 
+  Future<UserModel?> getUser(String userId) async {
+    final doc = await _firestore.collection('users').doc(userId).get();
+    if (doc.exists) {
+      return UserModel.fromSnapshot(doc);
+    }
+    return null;
+  }
+
   Future<void> updateUserStatus(String userId, bool isActive) async {
     await _firestore.collection('users').doc(userId).update({
       'isActive': isActive,

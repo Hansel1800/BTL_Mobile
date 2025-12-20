@@ -58,6 +58,22 @@ class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScree
     }
     return widget.product.price;
   }
+
+  String get _currentImage {
+    if (_selectedSize != null && _selectedColor != null) {
+       try {
+        final variant = widget.product.variants.firstWhere(
+          (v) => v.size == _selectedSize && v.color == _selectedColor
+        );
+        if (variant.imageUrl != null && variant.imageUrl!.isNotEmpty) {
+          return variant.imageUrl!;
+        }
+      } catch (e) {
+        // No specific variant found
+      }
+    }
+    return widget.product.imageUrl;
+  }
   
   int get _currentStock {
      if (_selectedSize != null && _selectedColor != null) {
@@ -139,11 +155,11 @@ class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScree
             expandedHeight: 400,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              background: widget.product.imageUrl.isNotEmpty
+              background: _currentImage.isNotEmpty
                   ? Container(
                       color: Colors.white, // Background for non-filling images
                       child: CachedNetworkImage(
-                        imageUrl: widget.product.imageUrl,
+                        imageUrl: _currentImage,
                         fit: BoxFit.contain, // Show full image
                       ),
                     )

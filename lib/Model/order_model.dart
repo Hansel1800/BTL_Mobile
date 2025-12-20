@@ -42,16 +42,18 @@ class OrderItem {
 
 class Order {
   final String id;
+  final String userId;
   final String customerName;
   final String customerPhone;
   final String customerAddress;
   final List<OrderItem> products;
   final double totalPrice;
-  final String status; // 'pending', 'processing', 'shipped', 'delivered', 'cancelled'
+  final String status;
   final DateTime createdAt;
 
   Order({
     required this.id,
+    required this.userId,
     required this.customerName,
     required this.customerPhone,
     required this.customerAddress,
@@ -64,6 +66,7 @@ class Order {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'userId': userId,
       'customerName': customerName,
       'customerPhone': customerPhone,
       'customerAddress': customerAddress,
@@ -77,6 +80,7 @@ class Order {
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
       id: json['id'] ?? '',
+      userId: json['userId'] ?? '',
       customerName: json['customerName'] ?? '',
       customerPhone: json['customerPhone'] ?? '',
       customerAddress: json['customerAddress'] ?? '',
@@ -94,6 +98,7 @@ class Order {
     final data = doc.data() as Map<String, dynamic>;
     return Order(
       id: doc.id,
+      userId: data['userId'] ?? '',
       customerName: data['customerName'] ?? '',
       customerPhone: data['customerPhone'] ?? '',
       customerAddress: data['customerAddress'] ?? '',

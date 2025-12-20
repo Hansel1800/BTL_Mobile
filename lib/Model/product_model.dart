@@ -5,12 +5,16 @@ class ProductVariant {
   final String size;
   final double price;
   final int stock;
+  final String? imageUrl;
+  final int warningStock;
 
   ProductVariant({
     required this.color,
     required this.size,
     required this.price,
     required this.stock,
+    this.imageUrl,
+    this.warningStock = 0,
   });
 
   Map<String, dynamic> toJson() {
@@ -19,6 +23,8 @@ class ProductVariant {
       'size': size,
       'price': price,
       'stock': stock,
+      'imageUrl': imageUrl,
+      'warningStock': warningStock,
     };
   }
 
@@ -28,6 +34,8 @@ class ProductVariant {
       size: json['size'] ?? '',
       price: (json['price'] ?? 0).toDouble(),
       stock: json['stock'] ?? 0,
+      imageUrl: json['imageUrl'],
+      warningStock: json['warningStock'] ?? 0,
     );
   }
 }

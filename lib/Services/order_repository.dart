@@ -21,6 +21,7 @@ class OrderRepository {
       final docRef = _firestore.collection(_collection).doc();
       final newOrder = model.Order(
         id: docRef.id,
+        userId: order.userId,
         customerName: order.customerName,
         customerPhone: order.customerPhone,
         customerAddress: order.customerAddress,
@@ -35,6 +36,16 @@ class OrderRepository {
       print('Error adding order: $e');
       rethrow;
     }
+  }
+
+  // Check if user has any orders (for first order discount)
+  Future<bool> hasUserOrdered(String userId) async {
+    final snapshot = await _firestore
+        .collection(_collection)
+        .where('userId', isEqualTo: userId)
+        .limit(1)
+        .get();
+    return snapshot.docs.isNotEmpty;
   }
 
   Future<void> updateOrder(model.Order order) async {

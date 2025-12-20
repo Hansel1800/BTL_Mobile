@@ -41,4 +41,17 @@ class PromotionRepository {
   Future<void> deleteVoucher(String id) async {
     await _firestore.collection('vouchers').doc(id).delete();
   }
+
+  Future<VoucherModel?> getVoucherByCode(String code) async {
+    final snapshot = await _firestore
+        .collection('vouchers')
+        .where('code', isEqualTo: code)
+        .limit(1)
+        .get();
+        
+    if (snapshot.docs.isNotEmpty) {
+      return VoucherModel.fromSnapshot(snapshot.docs.first);
+    }
+    return null;
+  }
 }
