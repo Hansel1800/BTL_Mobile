@@ -351,14 +351,22 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Card Holder', style: TextStyle(color: Colors.grey, fontSize: 10)),
-                        Text(_cardHolder, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Card Holder', style: TextStyle(color: Colors.grey, fontSize: 10)),
+                          Text(
+                            _cardHolder,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                     Column(
+                    const SizedBox(width: 16),
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('Expires', style: TextStyle(color: Colors.grey, fontSize: 10)),
