@@ -108,11 +108,18 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
   }
 }
 
-class ProductListTab extends ConsumerWidget {
+class ProductListTab extends ConsumerStatefulWidget {
   const ProductListTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductListTab> createState() => _ProductListTabState();
+}
+
+class _ProductListTabState extends ConsumerState<ProductListTab> {
+  String _selectedGenderFilter = 'Tất cả';
+
+  @override
+  Widget build(BuildContext context) {
     final productsAsyncValue = ref.watch(productsProvider);
 
     return Scaffold(
@@ -143,7 +150,6 @@ class ProductListTab extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.black),
             onPressed: () async {
-              // Show confirmation dialog
               final shouldLogout = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -163,9 +169,7 @@ class ProductListTab extends ConsumerWidget {
               );
 
               if (shouldLogout == true) {
-                // Perform logout
                 await FirebaseAuth.instance.signOut();
-                
                 if (context.mounted) {
                   Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -195,6 +199,24 @@ class ProductListTab extends ConsumerWidget {
                   style: TextStyle(color: Colors.grey, fontSize: 12),
                 ),
                 const SizedBox(height: 16),
+                
+                // Gender Filter
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildGenderFilterChip("Tất cả"),
+                      const SizedBox(width: 8),
+                      _buildGenderFilterChip("Nam"),
+                      const SizedBox(width: 8),
+                      _buildGenderFilterChip("Nữ"),
+                      const SizedBox(width: 8),
+                      _buildGenderFilterChip("Unisex"),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 // Search Bar
                 Row(
                   children: [
@@ -225,17 +247,10 @@ class ProductListTab extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Row(
-                      children: const [
-                        Text("Tất cả loại", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                        Icon(Icons.keyboard_arrow_down, color: Colors.grey, size: 16),
-                      ],
-                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                // Filter Chips
+                // Filter Chips (Existing)
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -245,20 +260,14 @@ class ProductListTab extends ConsumerWidget {
                       _buildFilterChip("Sắp hết hàng", false),
                       const SizedBox(width: 8),
                       _buildFilterChip("Ẩn", false),
-                      const SizedBox(width: 8),
-                      _buildFilterChip("Tất cả danh mục", false),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Summary & Add Button
+                // Add Button
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Text(
-                      "168 sản phẩm • 12 sắp hết hàng",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
                     ElevatedButton.icon(
                       onPressed: () {
                         Navigator.push(
@@ -282,14 +291,24 @@ class ProductListTab extends ConsumerWidget {
           Expanded(
             child: productsAsyncValue.when(
               data: (products) {
+                // Filter by Gender
+                final filteredProducts = products.where((p) {
+                   if (_selectedGenderFilter == 'Tất cả') return true;
+                   return p.gender == _selectedGenderFilter;
+                }).toList();
+
                 // Group products by category
                 final Map<String, List<Product>> groupedProducts = {};
-                for (var product in products) {
+                for (var product in filteredProducts) {
                   final category = product.category.isEmpty ? 'Khác' : product.category;
                   if (!groupedProducts.containsKey(category)) {
                     groupedProducts[category] = [];
                   }
                   groupedProducts[category]!.add(product);
+                }
+
+                if (groupedProducts.isEmpty) {
+                   return const Center(child: Text("Không có sản phẩm nào."));
                 }
 
                 return ListView.builder(
@@ -338,6 +357,33 @@ class ProductListTab extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGenderFilterChip(String label) {
+    final isSelected = _selectedGenderFilter == label;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedGenderFilter = label;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? Colors.blue : Colors.grey.shade300),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : Colors.black54,
+          ),
+        ),
       ),
     );
   }
@@ -426,7 +472,7 @@ class ProductListTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "SKU: $sku • ${product.category}",
+                      "SKU: $sku • ${product.category} • ${product.gender}",
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                     const SizedBox(height: 8),
@@ -434,7 +480,7 @@ class ProductListTab extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "₫${product.price.toStringAsFixed(0)}", // Assuming VND or similar large number format based on image
+                          "₫${product.price.toStringAsFixed(0)}", 
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         Container(

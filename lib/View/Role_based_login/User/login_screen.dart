@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:do_an_quan_ao/View/home_screen.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/user_main_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:do_an_quan_ao/Services/auth_service.dart';
@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => UserScreen()),
+        MaterialPageRoute(builder: (_) => const UserMainScreen()),
       );
     } else {
       ScaffoldMessenger.of(

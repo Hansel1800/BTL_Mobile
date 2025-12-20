@@ -69,8 +69,10 @@ class UserDetailScreen extends ConsumerWidget {
               ? _formatTime(userOrders.first.createdAt) 
               : 'Chưa có đơn';
 
-          // Try to get address from latest order
-          final address = userOrders.isNotEmpty ? userOrders.first.customerAddress : 'Chưa cập nhật';
+          // Try to get address from user profile first, then latest order
+          final address = user.address.isNotEmpty 
+              ? user.address 
+              : (userOrders.isNotEmpty ? userOrders.first.customerAddress : 'Chưa cập nhật');
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -102,6 +104,10 @@ class UserDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _buildContactInfo(user, address),
                 const SizedBox(height: 16),
+                if (user.preferences.isNotEmpty) ...[
+                  _buildPreferencesInfo(user),
+                  const SizedBox(height: 16),
+                ],
                 _buildRecentOrders(userOrders),
               ],
             ),
@@ -115,6 +121,7 @@ class UserDetailScreen extends ConsumerWidget {
 
   Widget _buildProfileCard(UserModel user) {
     final isNewUser = user.createdAt.isAfter(DateTime.now().subtract(const Duration(days: 1)));
+    final displayName = user.fullName.isNotEmpty ? user.fullName : user.name;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -127,10 +134,15 @@ class UserDetailScreen extends ConsumerWidget {
           CircleAvatar(
             radius: 30,
             backgroundColor: Colors.grey.shade200,
-            child: Text(
-              _getInitials(user.name),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-            ),
+            backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                ? NetworkImage(user.avatarUrl!)
+                : null,
+            child: (user.avatarUrl == null || user.avatarUrl!.isEmpty)
+                ? Text(
+                    _getInitials(displayName),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -138,7 +150,7 @@ class UserDetailScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.name,
+                  displayName,
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
@@ -186,6 +198,7 @@ class UserDetailScreen extends ConsumerWidget {
     );
   }
 
+  // ... _buildStatCard and _buildActionButton remain same ...
   Widget _buildStatCard(String title, String value, String subtitle) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -241,16 +254,59 @@ class UserDetailScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Thông tin liên hệ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text('Thông tin chi tiết', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               Text('Chỉnh sửa', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 16),
+          if (user.fullName.isNotEmpty) ...[
+            _buildInfoRow('Họ và tên', user.fullName),
+            const SizedBox(height: 12),
+          ],
           _buildInfoRow('Số điện thoại', user.phoneNumber.isEmpty ? 'Chưa cập nhật' : user.phoneNumber),
           const SizedBox(height: 12),
-          _buildInfoRow('Địa chỉ', address),
+          if (user.dob.isNotEmpty) ...[
+            _buildInfoRow('Ngày sinh', user.dob),
+            const SizedBox(height: 12),
+          ],
+          if (user.gender != null) ...[
+            _buildInfoRow('Giới tính', user.gender!),
+            const SizedBox(height: 12),
+          ],
+          if (user.city != null) ...[
+            _buildInfoRow('Thành phố', user.city!),
+            const SizedBox(height: 12),
+          ],
+          _buildInfoRow('Địa chỉ (Đơn hàng)', address),
           const SizedBox(height: 12),
           _buildInfoRow('Ngày tạo', DateFormat('dd/MM/yyyy').format(user.createdAt)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreferencesInfo(UserModel user) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Sở thích mua sắm', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: user.preferences.map((pref) => Chip(
+              label: Text(pref, style: const TextStyle(fontSize: 12)),
+              backgroundColor: Colors.grey.shade100,
+              padding: EdgeInsets.zero,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            )).toList(),
+          ),
         ],
       ),
     );

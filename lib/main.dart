@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_quan_ao/Services/auth_service.dart';
-import 'package:do_an_quan_ao/View/home_screen.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/user_main_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -92,7 +92,7 @@ class _AuthStateHandlerState extends State<AuthStateHandler> {
         ),
       );
     }
-    debugPrint('Showing ${_userRole == "Admin" ? "AdminScreen" : "UserScreen"}');
-    return _userRole == "Admin" ? const AdminScreen() : const UserScreen();
+    debugPrint('Showing ${_userRole == "Admin" ? "AdminScreen" : "UserMainScreen"}');
+    return _userRole == "Admin" ? const AdminScreen() : const UserMainScreen();
   }
 }

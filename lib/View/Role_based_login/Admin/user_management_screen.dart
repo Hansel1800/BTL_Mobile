@@ -297,16 +297,34 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  Text(
-                    user.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey.shade200,
+                    backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                        ? NetworkImage(user.avatarUrl!)
+                        : null,
+                    child: (user.avatarUrl == null || user.avatarUrl!.isEmpty)
+                        ? Text(
+                            _getInitials(user.name),
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
+                          )
+                        : null,
                   ),
-                  Text(
-                    user.email,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      Text(
+                        user.email,
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -378,6 +396,13 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
         ],
       ),
     );
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'NA';
+    final parts = name.trim().split(' ');
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
   }
 
   String _formatCurrency(double amount) {

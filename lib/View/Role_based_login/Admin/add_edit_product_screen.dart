@@ -28,6 +28,8 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
   String? _imageUrl;
   List<String>? _selectedColors = [];
   List<String>? _selectedSizes = [];
+  String _selectedGender = '';
+  List<ProductVariant> _variants = [];
 
   @override
   void initState() {
@@ -35,7 +37,8 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
     _nameController = TextEditingController(text: widget.product?.name ?? '');
     _skuController = TextEditingController(text: widget.product != null ? 'TEE-BASIC-01' : ''); // Mock SKU
     _categoryController = TextEditingController(text: widget.product?.category ?? '');
-    _descriptionController = TextEditingController(); // Mock Description
+    _descriptionController = TextEditingController(text: widget.product?.description ?? '');
+    _selectedGender = widget.product?.gender ?? '';
     
     // Fix: Safely handle price initialization
     String priceText = '';
@@ -63,8 +66,15 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
     } catch (e) {
       _selectedColors = [];
     }
-    // Mock sizes initialization
-    _selectedSizes = ['M', 'L'];
+    
+    // Fix: Safely handle sizes initialization
+    try {
+      _selectedSizes = List.from(widget.product?.sizes ?? []);
+    } catch (e) {
+      _selectedSizes = [];
+    }
+
+    _variants = List.from(widget.product?.variants ?? []);
   }
 
   @override
@@ -91,6 +101,10 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
         imageUrl: _imageUrl ?? '',
         stock: int.tryParse(_stockController.text) ?? 0,
         colors: _selectedColors ?? [],
+        sizes: _selectedSizes ?? [],
+        gender: _selectedGender,
+        variants: _variants,
+        description: _descriptionController.text,
       );
 
       try {
@@ -247,6 +261,42 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                       ),
                       const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
                     ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Gender Dropdown
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Giới tính', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F7FA),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedGender.isEmpty ? null : _selectedGender,
+                    hint: const Text('Chọn giới tính'),
+                    isExpanded: true,
+                    items: ['Nam', 'Nữ', 'Unisex'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedGender = newValue;
+                        });
+                      }
+                    },
                   ),
                 ),
               ),
@@ -431,25 +481,46 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
           if (_selectedSizes != null && _selectedSizes!.isNotEmpty && 
               _selectedColors != null && _selectedColors!.isNotEmpty) ...[
             ...() {
-              List<Widget> variants = [];
+              List<Widget> variantWidgets = [];
               for (int i = 0; i < _selectedSizes!.length; i++) {
                 for (int j = 0; j < _selectedColors!.length; j++) {
-                  if (variants.isNotEmpty) {
-                    variants.add(const Divider(height: 24));
+                  if (variantWidgets.isNotEmpty) {
+                    variantWidgets.add(const Divider(height: 24));
                   }
-                  variants.add(_buildVariantItem(
-                    'Size ${_selectedSizes![i]} • ${_selectedColors![j]}',
-                    'Giá: ₫199.000 • Tồn: 32',
+                  
+                  final size = _selectedSizes![i];
+                  final color = _selectedColors![j];
+                  
+                  // Find existing variant or create temporary default
+                  ProductVariant? existingVariant;
+                  try {
+                    existingVariant = _variants.firstWhere(
+                      (v) => v.size == size && v.color == color
+                    );
+                  } catch (e) {
+                    existingVariant = null;
+                  }
+
+                  final displayPrice = existingVariant?.price ?? double.tryParse(_priceController.text) ?? 0;
+                  final displayStock = existingVariant?.stock ?? int.tryParse(_stockController.text) ?? 0;
+
+                  variantWidgets.add(_buildVariantItem(
+                    size, 
+                    color,
+                    'Giá: ₫${displayPrice.toStringAsFixed(0)} • Tồn: $displayStock',
+                    existingVariant
                   ));
                 }
               }
-              return variants;
+              return variantWidgets;
             }(),
           ],
         ],
       ),
     );
   }
+
+  
 
   void _showColorPicker() {
     showModalBottomSheet(
@@ -489,20 +560,78 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
     );
   }
 
-  Widget _buildVariantItem(String title, String subtitle) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildVariantItem(String size, String color, String details, ProductVariant? variant) {
+    return InkWell(
+      onTap: () {
+        _showEditVariantDialog(size, color, variant);
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Size $size • $color', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(details, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            ],
+          ),
+          const Icon(Icons.edit, color: Colors.blue, size: 20),
+        ],
+      ),
+    );
+  }
+
+  void _showEditVariantDialog(String size, String color, ProductVariant? currentVariant) {
+    final priceCtrl = TextEditingController(text: (currentVariant?.price ?? double.tryParse(_priceController.text) ?? 0).toStringAsFixed(0));
+    final stockCtrl = TextEditingController(text: (currentVariant?.stock ?? int.tryParse(_stockController.text) ?? 0).toString());
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Size: $size - Màu: $color'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+             TextField(
+               controller: priceCtrl,
+               keyboardType: TextInputType.number,
+               decoration: const InputDecoration(labelText: 'Giá riêng'),
+             ),
+             TextField(
+               controller: stockCtrl,
+               keyboardType: TextInputType.number,
+               decoration: const InputDecoration(labelText: 'Tồn kho riêng'),
+             ),
           ],
         ),
-        const Icon(Icons.chevron_right, color: Colors.grey),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              final newPrice = double.tryParse(priceCtrl.text) ?? 0;
+              final newStock = int.tryParse(stockCtrl.text) ?? 0;
+              
+              setState(() {
+                // Remove existing if present
+                _variants.removeWhere((v) => v.size == size && v.color == color);
+                // Add new/updated
+                _variants.add(ProductVariant(
+                  size: size, 
+                  color: color, 
+                  price: newPrice, 
+                  stock: newStock
+                ));
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -595,6 +724,8 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
     {'title': 'Quần short', 'subtitle': 'Short kaki, short jean', 'section': 'other'},
     {'title': 'Đầm / Váy', 'subtitle': 'Váy liền, chân váy', 'section': 'other'},
     {'title': 'Phụ kiện', 'subtitle': 'Nón, dây lưng, túi xách', 'section': 'other'},
+    {'title': 'Set đồ', 'subtitle': 'Set đồ bộ ', 'section': 'other'},
+  
   ];
 
   @override

@@ -22,6 +22,11 @@ class ProductRepository {
         price: product.price,
         imageUrl: product.imageUrl,
         stock: product.stock,
+        colors: product.colors,
+        sizes: product.sizes,
+        gender: product.gender,
+        variants: product.variants,
+        description: product.description,
       );
       await docRef.set(newProduct.toJson());
       print('Product added to Firestore: ${docRef.id}');
@@ -33,13 +38,7 @@ class ProductRepository {
 
   Future<void> updateProduct(Product product) async {
     try {
-      await _firestore.collection(_collection).doc(product.id).update({
-        'name': product.name,
-        'category': product.category,
-        'price': product.price,
-        'imageUrl': product.imageUrl,
-        'stock': product.stock,
-      });
+      await _firestore.collection(_collection).doc(product.id).update(product.toJson());
     } catch (e) {
       print('Error updating product: $e');
       rethrow;

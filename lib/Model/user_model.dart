@@ -8,6 +8,13 @@ class UserModel {
   final String phoneNumber;
   final DateTime createdAt;
   final bool isActive;
+  final String fullName;
+  final String dob;
+  final String? gender;
+  final String? city;
+  final List<String> preferences;
+  final String? avatarUrl;
+  final String address;
 
   UserModel({
     required this.id,
@@ -17,6 +24,13 @@ class UserModel {
     this.phoneNumber = '',
     required this.createdAt,
     this.isActive = true,
+    this.fullName = '',
+    this.dob = '',
+    this.gender,
+    this.city,
+    this.preferences = const [],
+    this.avatarUrl,
+    this.address = '',
   });
 
   Map<String, dynamic> toJson() {
@@ -28,6 +42,13 @@ class UserModel {
       'phoneNumber': phoneNumber,
       'createAt': Timestamp.fromDate(createdAt),
       'isActive': isActive,
+      'fullName': fullName,
+      'dob': dob,
+      'gender': gender,
+      'city': city,
+      'preferences': preferences,
+      'avatarUrl': avatarUrl,
+      'address': address,
     };
   }
 
@@ -40,6 +61,13 @@ class UserModel {
       phoneNumber: json['phoneNumber'] ?? '',
       createdAt: (json['createAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isActive: json['isActive'] ?? true,
+      fullName: json['fullName'] ?? '',
+      dob: json['dob'] ?? '',
+      gender: json['gender'],
+      city: json['city'],
+      preferences: List<String>.from(json['preferences'] ?? []),
+      avatarUrl: json['avatarUrl'],
+      address: json['address'] ?? '',
     );
   }
 
@@ -53,6 +81,13 @@ class UserModel {
       phoneNumber: data['phoneNumber'] ?? '',
       createdAt: (data['createAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isActive: data['isActive'] ?? true,
+      fullName: data['fullName'] ?? '',
+      dob: data['dob'] ?? '',
+      gender: data['gender'],
+      city: data['city'],
+      preferences: List<String>.from(data['preferences'] ?? []),
+      avatarUrl: data['avatarUrl'],
+      address: data['address'] ?? '',
     );
   }
 }
