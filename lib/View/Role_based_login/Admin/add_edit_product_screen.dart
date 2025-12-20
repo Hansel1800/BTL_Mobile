@@ -3,6 +3,7 @@ import 'package:do_an_quan_ao/Model/product_model.dart';
 import 'package:do_an_quan_ao/ViewModel/product_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
 
 class AddEditProductScreen extends ConsumerStatefulWidget {
   final Product? product;
@@ -377,26 +378,12 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                _imageUrl = val.trim();
              });
            }),
-           if (_imageUrl != null && _imageUrl!.toLowerCase().startsWith('http'))
+           if (_imageUrl != null && _imageUrl!.isNotEmpty)
              Padding(
                padding: const EdgeInsets.only(top: 8.0),
                child: SizedBox(
                  height: 100,
-                 child: Image.network(
-                   _imageUrl!,
-                   errorBuilder: (context, error, stackTrace) => const Column(
-                     mainAxisAlignment: MainAxisAlignment.center,
-                     children: [
-                       Icon(Icons.broken_image, color: Colors.grey),
-                       Text('Lỗi ảnh', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                     ],
-                   ),
-                   loadingBuilder: (context, child, loadingProgress) {
-                     if (loadingProgress == null) return child;
-                     return const Center(child: CircularProgressIndicator());
-                   },
-                   fit: BoxFit.contain,
-                 ),
+                 child: _buildImagePreview(_imageUrl!),
                ),
              ),
         ],
@@ -695,26 +682,12 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                         setState(() {});
                      },
                    ),
-                   if (imageUrlCtrl.text.trim().toLowerCase().startsWith('http'))
+                   if (imageUrlCtrl.text.trim().isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: SizedBox(
                           height: 100, 
-                          child: Image.network(
-                            imageUrlCtrl.text.trim(), 
-                            errorBuilder: (context, error, stackTrace) => const Column(
-                               mainAxisAlignment: MainAxisAlignment.center,
-                               children: [
-                                 Icon(Icons.broken_image, color: Colors.grey),
-                                 Text('Lỗi tải ảnh', style: TextStyle(fontSize: 10, color: Colors.grey))
-                               ],
-                            ),
-                            loadingBuilder: (context, child, loadingProgress) {
-                               if (loadingProgress == null) return child;
-                               return const Center(child: CircularProgressIndicator());
-                            },
-                            fit: BoxFit.contain,
-                          )
+                          child: _buildImagePreview(imageUrlCtrl.text),
                         ),
                       )
                 ],
@@ -760,6 +733,49 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
             ],
           );
         }
+      ),
+    );
+  }
+
+  Widget _buildImagePreview(String url) {
+    try {
+      if (url.trim().isEmpty) return const SizedBox();
+      final trimmedUrl = url.trim();
+      
+      if (trimmedUrl.toLowerCase().startsWith('http')) {
+        return Image.network(
+          trimmedUrl,
+          errorBuilder: (context, error, stackTrace) => _buildErrorWidget(error),
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return const Center(child: CircularProgressIndicator());
+          },
+          fit: BoxFit.contain,
+        );
+      } else if (trimmedUrl.startsWith('data:image')) {
+        final base64String = trimmedUrl.split(',').last;
+        final bytes = base64Decode(base64String);
+        return Image.memory(
+          bytes,
+          errorBuilder: (context, error, stackTrace) => _buildErrorWidget(error),
+          fit: BoxFit.contain,
+        );
+      }
+    } catch (e) {
+      return _buildErrorWidget(e);
+    }
+    return const SizedBox();
+  }
+
+  Widget _buildErrorWidget(Object error) {
+    return Tooltip(
+      message: error.toString(),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.broken_image, color: Colors.grey),
+          Text('Lỗi ảnh', style: TextStyle(fontSize: 10, color: Colors.grey)),
+        ],
       ),
     );
   }
