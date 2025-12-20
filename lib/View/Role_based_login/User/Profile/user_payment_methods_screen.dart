@@ -15,6 +15,9 @@ class UserPaymentMethodsScreen extends StatefulWidget {
 class _UserPaymentMethodsScreenState extends State<UserPaymentMethodsScreen> {
   final UserRepository _userRepo = UserRepository();
   final String _userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  
+  // Track selected card index for animation/stacking
+  String? _focusedCardId;
 
   void _showAddMethodBottomSheet() {
     showModalBottomSheet(
@@ -187,30 +190,19 @@ class _UserPaymentMethodsScreenState extends State<UserPaymentMethodsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Phương thức thanh toán', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        centerTitle: false,
+        title: const Text('Quản lý thẻ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: const Color(0xFFF5F7FA),
         elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
-          decoration: const BoxDecoration(color: Color(0xFFEBE4DB), shape: BoxShape.circle),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black),
-            onPressed: () => Navigator.pop(context),
-          ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: const BoxDecoration(
-               color: Color(0xFFEBE4DB),
-               shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.more_horiz, color: Colors.black),
-              onPressed: () {},
-            ),
-          )
+            IconButton(
+                icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+                onPressed: _showAddMethodBottomSheet,
+            )
         ],
       ),
       body: StreamBuilder<List<PaymentMethod>>(
@@ -219,84 +211,43 @@ class _UserPaymentMethodsScreenState extends State<UserPaymentMethodsScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-             return Center(
-               child: Column(
-                 mainAxisAlignment: MainAxisAlignment.center,
-                 children: [
-                   const Text('Chưa có phương thức thanh toán nào'),
-                   const SizedBox(height: 20),
-                   ElevatedButton(
-                     onPressed: _showAddMethodBottomSheet,
-                     child: const Text('Thêm phương thức mới'),
-                   )
-                 ],
-               ),
-             );
-          }
+          final methods = snapshot.data ?? [];
+          final cards = methods.where((m) => m.type != 'COD' && m.type != 'MOMO').toList();
+          final visibleCards = cards.take(5).toList();
+          final others = methods.where((m) => m.type == 'COD' || m.type == 'MOMO').toList();
 
-          final methods = snapshot.data!;
-          // Find default, or first one if no default set (fallback)
-          PaymentMethod? defaultMethod;
-          try {
-             defaultMethod = methods.firstWhere((m) => m.isDefault);
-          } catch (e) {
-             defaultMethod = methods.first;
+          // Ensure focused card logic
+          if (_focusedCardId != null && !cards.any((c) => c.id == _focusedCardId)) {
+             _focusedCardId = null;
           }
-          
-          final otherMethods = methods.where((m) => m.id != defaultMethod!.id).toList();
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (methods.isNotEmpty) ...[
-                  const Text('Phương thức hiện tại', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  _buildMethodItem(defaultMethod!, isDefault: true),
-                ],
-                
-                if (otherMethods.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  const Text('Các phương thức khác', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  ...otherMethods.map((m) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildMethodItem(m),
-                  )),
-                ],
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text('Thẻ của tôi (${cards.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+                if (visibleCards.isNotEmpty)
+                    _buildWalletStack(visibleCards)
+                else
+                    Container(
+                        height: 200, 
+                        margin: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(16)),
+                        child: const Center(child: Text('Chưa có thẻ nào')),
+                    ),
                 
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _showAddMethodBottomSheet,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFEBE4DB),
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                    child: const Text('+ Thêm thẻ / ví mới'),
-                  ),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: Text('Phương thức khác', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
-                const SizedBox(height: 16),
-                SizedBox(
-                   width: double.infinity,
-                   child: ElevatedButton(
-                     onPressed: () => Navigator.pop(context),
-                     style: ElevatedButton.styleFrom(
-                       backgroundColor: const Color(0xFFC69C6D),
-                       foregroundColor: Colors.white,
-                       padding: const EdgeInsets.symmetric(vertical: 16),
-                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                       elevation: 0,
-                     ),
-                     child: const Text('Lưu thay đổi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                   ),
-                 ),
+                ...others.map((method) => _buildMethodItem(method)),
+                
+                const SizedBox(height: 80), // Bottom padding
               ],
             ),
           );
@@ -304,112 +255,230 @@ class _UserPaymentMethodsScreenState extends State<UserPaymentMethodsScreen> {
       ),
     );
   }
-  
-  Widget _buildMethodItem(PaymentMethod method, {bool isDefault = false}) {
-    IconData iconData;
-    Color iconColor;
-    
-    if (method.type == 'MOMO') {
-      iconData = Icons.account_balance_wallet;
-      iconColor = Colors.pink;
-    } else if (method.type == 'COD') {
-      iconData = Icons.local_shipping;
-      iconColor = Colors.green;
-    } else {
-      iconData = Icons.credit_card;
-      iconColor = Colors.blue;
-    }
 
+  Widget _buildWalletStack(List<PaymentMethod> cards) {
+      const double cardHeight = 200;
+      const double cardOffset = 60.0;
+      final totalHeight = cardHeight + (cards.length - 1) * cardOffset;
+
+      return SizedBox(
+          height: totalHeight + 20, // Add some buffer
+          child: Stack(
+              clipBehavior: Clip.none,
+              children: _buildStackContent(cards, cardHeight, cardOffset),
+          ),
+      );
+  }
+  
+  // Custom Build Stack Helper
+  List<Widget> _buildStackContent(List<PaymentMethod> cards, double cardHeight, double cardOffset) {
+     final List<Widget> children = [];
+     
+     // Add non-focused cards first
+     for (int i = 0; i < cards.length; i++) {
+        final card = cards[i];
+        if (card.id == _focusedCardId) continue; // Skip focused for now
+        
+        children.add(Positioned(
+            top: i * cardOffset, // Keep original visual position
+            left: 0, 
+            right: 0,
+            child: GestureDetector(
+                onTap: () {
+                    setState(() {
+                         _focusedCardId = card.id;
+                    });
+                },
+                child: _buildCreditCardVisual(card, i, isFocused: false),
+            ),
+        ));
+     }
+
+     // Now add focused one (last, so it's on top)
+     if (_focusedCardId != null) {
+         final index = cards.indexWhere((c) => c.id == _focusedCardId);
+         if (index != -1) {
+             final card = cards[index];
+             children.add(Positioned(
+                top: index * cardOffset, // Same position
+                left: 0,
+                right: 0,
+                child: GestureDetector(
+                    onTap: () {
+                         // If already focused, navigate to detail screen
+                         Navigator.push(context, MaterialPageRoute(builder: (context) => CardDetailScreen(paymentMethod: card)));
+                    },
+                    child: _buildCreditCardVisual(card, index, isFocused: true),
+                ),
+             ));
+         }
+     }
+     
+     return children;
+  }              
+
+  Widget _buildCreditCardVisual(PaymentMethod method, int index, {bool isFocused = false}) {
+      final List<List<Color>> gradients = [
+          [const Color(0xFF0F2027), const Color(0xFF2C5364)], 
+          [const Color(0xFF373B44), const Color(0xFF4286f4)], 
+          [const Color(0xFF233329), const Color(0xFF63D471)], 
+          [const Color(0xFF833ab4), const Color(0xFFfd1d1d)],
+      ];
+      final gradient = gradients[index % gradients.length];
+      
+      final cardNumberRaw = method.details['cardNumber'] ?? '**** **** **** 0000';
+      String displayNum = cardNumberRaw;
+      if (cardNumberRaw.length >= 4) {
+          displayNum = '**** **** **** ${cardNumberRaw.substring(cardNumberRaw.length - 4)}';
+      }
+
+      return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            height: 200, 
+            decoration: BoxDecoration(
+                gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                    if (isFocused) 
+                       BoxShadow(color: Colors.white.withOpacity(0.5), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 0))
+                    else
+                       BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, -5))
+                ],
+                border: isFocused ? Border.all(color: Colors.white, width: 2) : null,
+            ),
+            padding: const EdgeInsets.all(16), 
+            child: Stack(
+              children: [
+                Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                        const Icon(Icons.credit_card, color: Colors.white),
+                        // Flexible or constrained text
+                        Text(displayNum, style: const TextStyle(color: Colors.white, fontSize: 18, letterSpacing: 2, fontFamily: 'Courier')),
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                                 Expanded(
+                                   child: Column(
+                                       crossAxisAlignment: CrossAxisAlignment.start,
+                                       children: [
+                                           const Text('Card Holder', style: TextStyle(color: Colors.white60, fontSize: 10)),
+                                           Text(method.subtitle.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                       ],
+                                   ),
+                                 ),
+                                 if (isFocused)
+                                   GestureDetector(
+                                     onTap: () {
+                                         // Detail Navigation
+                                         Navigator.push(context, MaterialPageRoute(builder: (context) => CardDetailScreen(paymentMethod: method)));
+                                     },
+                                     child: Container(
+                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                         decoration: BoxDecoration(
+                                             color: Colors.white,
+                                             borderRadius: BorderRadius.circular(20),
+                                         ),
+                                         child: const Text('Chi tiết', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10)),
+                                     ),
+                                   ),
+                            ]
+                        )
+                    ],
+                ),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (method.isDefault)
+                         const Padding(
+                           padding: EdgeInsets.only(right: 4),
+                           child: Text('Mặc định', style: TextStyle(color: Colors.yellow, fontSize: 10, fontWeight: FontWeight.bold)),
+                         ),
+                      GestureDetector(
+                        onTap: () {
+                          _userRepo.setDefaultPaymentMethod(_userId, method.id);
+                        },
+                        child: Icon(
+                          method.isDefault ? Icons.star : Icons.star_border,
+                          color: method.isDefault ? Colors.yellow : Colors.white54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+      );
+  }
+
+  Widget _getPaymentIcon(String type) {
+    switch (type) {
+      case 'MOMO':
+        return const Icon(Icons.account_balance_wallet, color: Colors.pink, size: 20);
+      case 'COD':
+        return const Icon(Icons.local_shipping, color: Colors.green, size: 20);
+      case 'VISA':
+      case 'MASTER':
+      default:
+        return const Icon(Icons.credit_card, color: Colors.blue, size: 20);
+    }
+  }
+
+  Widget _buildMethodItem(PaymentMethod method) {
+    bool isDefault = method.isDefault;
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFF0EAE4),
         borderRadius: BorderRadius.circular(16),
+        border: isDefault ? Border.all(color: const Color(0xFFC69C6D), width: 1.5) : null,
       ),
-      child: Row(
-        children: [
-           Container(
-            width: 50, height: 32,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
-            alignment: Alignment.center,
-            child: Icon(iconData, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(method.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(method.subtitle, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          child: _getPaymentIcon(method.type),
+        ),
+        title: Text(method.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (!isDefault)
-                TextButton(
-                  onPressed: () => _userRepo.setDefaultPaymentMethod(_userId, method.id),
-                  style: ButtonStyle(
-                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
-                      (states) {
-                        if (states.contains(WidgetState.hovered)) {
-                          return Colors.grey.withOpacity(0.1); 
-                        }
-                        return null;
+                Text(method.subtitle),
+                if (isDefault)
+                   const Padding(
+                       padding: EdgeInsets.only(top: 4),
+                       child: Text('Đã chọn làm mặc định', style: TextStyle(color: Color(0xFFC69C6D), fontSize: 12, fontWeight: FontWeight.bold)),
+                   ),
+            ]
+        ),
+        trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+                if (!isDefault)
+                  PopupMenuButton<String>(
+                      onSelected: (val) {
+                          if (val == 'default') {
+                              _userRepo.setDefaultPaymentMethod(_userId, method.id);
+                          } else if (val == 'delete') {
+                              _userRepo.deletePaymentMethod(_userId, method.id);
+                          }
                       },
-                    ),
-                    foregroundColor: WidgetStateProperty.resolveWith<Color?>(
-                      (states) {
-                        if (states.contains(WidgetState.hovered)) {
-                          return const Color(0xFFD29062);
-                        }
-                        return Colors.grey[800];
-                      },
-                    ),
-                    padding: WidgetStateProperty.all(EdgeInsets.zero),
-                    minimumSize: WidgetStateProperty.all(Size.zero),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
-                  ),
-                  child: const Text('Đặt làm mặc định', style: TextStyle(fontSize: 10)),
-                )
-              else 
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00BFA5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text('Mặc định', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-                
-              const SizedBox(height: 4),
-              isDefault 
-                ? GestureDetector(
-                    onTap: () {
-                      // Only navigate for Visa/Master cards as they have the 3D visual
-                      // Or maybe all? CardDetailScreen can handle MOMO/COD if we mock it?
-                      // User asked: "tạo thêm màn hình xem chi tiết thẻ khi ấn vào cũng quay lật 3D" -> Implies Card.
-                      // For now, let's enable it for cards only or generic but visuals might look weird if no number.
-                      // CardDetailScreen uses defaults if missing.
-                      // But let's check type.
-                      if (method.type == 'VISA' || method.type == 'MASTER' || method.details.containsKey('cardNumber')) {
-                         Navigator.push(context, MaterialPageRoute(builder: (context) => CardDetailScreen(paymentMethod: method)));
-                      }
-                    },
-                    child: Text(
-                      (method.details.containsKey('cardNumber')) ? 'Chi tiết' : '', 
-                      style: const TextStyle(fontSize: 10, color: Colors.grey, decoration: TextDecoration.underline)
-                    ),
+                      itemBuilder: (context) => [
+                          const PopupMenuItem(value: 'default', child: Text('Đặt làm mặc định')),
+                          if (method.type != 'COD') const PopupMenuItem(value: 'delete', child: Text('Xóa', style: TextStyle(color: Colors.red))),
+                      ],
+                      child: const Icon(Icons.more_vert, color: Colors.grey),
                   )
-                : GestureDetector(
-                    onTap: () => _userRepo.deletePaymentMethod(_userId, method.id),
-                    child: const Text('Xóa', style: TextStyle(fontSize: 10, color: Colors.red)),
-                  ),
+                else
+                   // If default, maybe option to delete only if not cod? NO, can't delete default usually without switching.
+                   // Just show Star
+                   const Icon(Icons.star, color: Color(0xFFC69C6D)),
             ],
-          )
-        ],
+        ),
       ),
     );
   }

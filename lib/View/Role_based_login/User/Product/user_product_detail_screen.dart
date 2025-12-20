@@ -19,6 +19,7 @@ class UserProductDetailScreen extends ConsumerStatefulWidget {
 class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScreen> {
   String? _selectedSize;
   String? _selectedColor;
+  int _quantity = 1;
 
   @override
   void initState() {
@@ -106,7 +107,8 @@ class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScree
       widget.product, 
       _selectedSize, 
       _selectedColor, 
-      1
+
+      _quantity
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -131,7 +133,7 @@ class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScree
       widget.product, 
       _selectedSize, 
       _selectedColor, 
-      1
+      _quantity
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -256,6 +258,7 @@ class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScree
                         onTap: () {
                           setState(() {
                             _selectedSize = size;
+                            _quantity = 1;
                           });
                         },
                         child: Container(
@@ -292,6 +295,7 @@ class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScree
                         onTap: () {
                           setState(() {
                             _selectedColor = colorName;
+                            _quantity = 1;
                           });
                         },
                         child: Container(
@@ -315,6 +319,40 @@ class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScree
                         ),
                       );
                     }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Số lượng', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove),
+                              onPressed: () {
+                                if (_quantity > 1) setState(() => _quantity--);
+                              },
+                            ),
+                            Text('$_quantity', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            IconButton(
+                              icon: const Icon(Icons.add),
+                              onPressed: () {
+                                if (_quantity < _currentStock) {
+                                  setState(() => _quantity++);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã đạt giới hạn tồn kho')));
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 100), // Space for bottom button
                 ],

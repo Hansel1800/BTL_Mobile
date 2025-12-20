@@ -13,11 +13,17 @@ class UserMainScreen extends ConsumerStatefulWidget {
   const UserMainScreen({super.key});
 
   @override
-  ConsumerState<UserMainScreen> createState() => _UserMainScreenState();
+  ConsumerState<UserMainScreen> createState() => UserMainScreenState();
 }
 
-class _UserMainScreenState extends ConsumerState<UserMainScreen> {
+class UserMainScreenState extends ConsumerState<UserMainScreen> {
   int _currentIndex = 0;
+
+  void navigateToTab(int index) {
+      setState(() {
+          _currentIndex = index;
+      });
+  }
 
   List<Widget> get _screens => [
     const UserHomeScreen(),

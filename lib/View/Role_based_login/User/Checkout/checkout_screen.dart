@@ -4,14 +4,23 @@ import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_profile_sc
 import 'package:do_an_quan_ao/Services/order_repository.dart';
 import 'package:do_an_quan_ao/Services/promotion_repository.dart';
 import 'package:do_an_quan_ao/Model/promotion_model.dart';
+import 'package:do_an_quan_ao/Model/promotion_model.dart';
 import 'package:do_an_quan_ao/Model/payment_method_model.dart';
+import 'package:do_an_quan_ao/Model/order_model.dart';
 import 'package:do_an_quan_ao/Services/user_repository.dart';
-import 'package:do_an_quan_ao/View/Role_based_login/User/Home/user_home_screen.dart';
+import 'package:do_an_quan_ao/Services/user_repository.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_profile_detail_screen.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_order_history_screen.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_payment_methods_screen.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/user_main_screen.dart';
+import 'package:do_an_quan_ao/Model/product_model.dart';
 import 'package:do_an_quan_ao/ViewModel/cart_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:do_an_quan_ao/View/Widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/Checkout/payment_success_screen.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -28,8 +37,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   UserModel? _user;
   PaymentMethod? _selectedPaymentMethod;
+  PaymentMethod? _displayCard;
   VoucherModel? _appliedVoucher;
   String _shippingMethod = 'standard'; // 'standard', 'express'
+  final TextEditingController _noteController = TextEditingController();
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
   
   @override
   void initState() {
@@ -68,21 +85,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget build(BuildContext context) {
     final cartItems = ref.watch(cartProvider);
     final subtotal = cartItems.fold(0.0, (sum, item) => sum + (item.product.price * item.quantity));
-    final shippingFee = _shippingMethod == 'standard' ? 25000.0 : 45000.0;
+    final shippingFee = _shippingMethod == 'standard' ? 25000.0 : 0.0;
     
-    double discount = 0.0;
-    if (_appliedVoucher != null) {
-        if (_appliedVoucher!.discountType == 'percent') {
-            discount = subtotal * (_appliedVoucher!.discountValue / 100);
-        } else {
-            discount = _appliedVoucher!.discountValue;
-        }
-        if (subtotal < _appliedVoucher!.minOrderValue) {
-            discount = 0;
-        }
-    }
+    // double discount = 0.0; // Removed per user request
     
-    final total = (subtotal + shippingFee - discount) > 0 ? (subtotal + shippingFee - discount) : 0.0;
+    final total = subtotal + shippingFee;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -128,7 +135,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             const SizedBox(height: 16),
             _buildOrderSummary(cartItems),
             const SizedBox(height: 16),
-            _buildCostDetails(subtotal, shippingFee, discount, total),
+            _buildCostDetails(subtotal, shippingFee, total),
             const SizedBox(height: 100),
           ],
         ),
@@ -187,7 +194,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  void _processOrder() {
+  void _processOrder() async {
     if (_user == null) return;
     
     if (_user!.address.isEmpty || _user!.phoneNumber.isEmpty) {
@@ -204,7 +211,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfileScreen())).then((_) => _loadUserData());
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfileDetailScreen())).then((_) => _loadUserData());
               },
               child: const Text('Cập nhật ngay'),
             ),
@@ -214,10 +221,83 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đặt hàng thành công!')));
-    // Clear cart and navigate home
+    // Recalculate totals
+    final cartItems = ref.read(cartProvider);
+    final subtotal = cartItems.fold(0.0, (sum, item) => sum + (item.product.price * item.quantity));
+    final shippingFee = _shippingMethod == 'standard' ? 25000.0 : 0.0;
+    
+    double discount = 0.0;
+    if (_appliedVoucher != null) {
+        if (_appliedVoucher!.discountType == 'percent') {
+            discount = subtotal * (_appliedVoucher!.discountValue / 100);
+        } else {
+            discount = _appliedVoucher!.discountValue;
+        }
+        if (subtotal < _appliedVoucher!.minOrderValue) {
+            discount = 0;
+        }
+    }
+    
+    final total = (subtotal + shippingFee - discount) > 0 ? (subtotal + shippingFee - discount) : 0.0;
+
+    // Create Order Items
+    final orderItems = cartItems.map((item) {
+        String imageUrl = item.product.imageUrl;
+        // Try to find variant image
+        if (item.selectedSize != null && item.selectedColor != null) {
+            try {
+                final variant = item.product.variants.firstWhere(
+                    (v) => v.size == item.selectedSize && v.color == item.selectedColor
+                );
+                if (variant.imageUrl != null && variant.imageUrl!.isNotEmpty) {
+                    imageUrl = variant.imageUrl!;
+                }
+            } catch (_) {}
+        }
+        
+        return OrderItem(
+            productId: item.product.id,
+            productName: item.product.name,
+            quantity: item.quantity,
+            price: item.product.price,
+            imageUrl: imageUrl,
+            size: item.selectedSize,
+            color: item.selectedColor,
+        );
+    }).toList();
+
+    // Create Order Object
+    final order = Order(
+        id: '', // Generated by repo
+        userId: _userId,
+        customerName: _user!.fullName.isNotEmpty ? _user!.fullName : _user!.name,
+        customerPhone: _user!.phoneNumber,
+        customerAddress: _user!.address,
+        products: orderItems,
+        totalPrice: total,
+        status: 'Chờ xác nhận',
+        paymentMethod: _selectedPaymentMethod?.title ?? 'Thanh toán khi nhận hàng',
+        createdAt: DateTime.now(),
+        note: _noteController.text.trim(),
+    );
+
+    try {
+        await _orderRepo.addOrder(order);
+    } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi đặt hàng: $e')));
+        return;
+    }
+
+    if (!mounted) return;
+
     ref.read(cartProvider.notifier).clearCart();
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const UserHomeScreen()), (route) => false);
+    
+    // Navigate to Success Screen
+    Navigator.pushAndRemoveUntil(
+      context, 
+      MaterialPageRoute(builder: (_) => const PaymentSuccessScreen()), 
+      (route) => false
+    );
   }
 
   Widget _buildAddressSection() {
@@ -233,7 +313,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               const Text('Địa chỉ giao hàng', style: TextStyle(fontWeight: FontWeight.bold)),
               GestureDetector(
                 onTap: () {
-                   Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfileScreen())).then((_) => _loadUserData());
+                   Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfileDetailScreen())).then((_) => _loadUserData());
                 },
                 child: const Text('Thay đổi', style: TextStyle(color: Color(0xFFC69C6D), fontSize: 12, fontWeight: FontWeight.bold)),
               ),
@@ -241,20 +321,35 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           const SizedBox(height: 12),
           if (_user != null) ...[
-             Text('${_user!.fullName.isNotEmpty ? _user!.fullName : _user!.name} · ${_user!.phoneNumber.isNotEmpty ? _user!.phoneNumber : "Chưa có SĐT"}', style: const TextStyle(fontWeight: FontWeight.bold)),
+             Text('${(_user!.fullName.isNotEmpty ? _user!.fullName : _user!.name).trim()} · ${(_user!.phoneNumber.isNotEmpty ? _user!.phoneNumber : "Chưa có SĐT").trim()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
              const SizedBox(height: 4),
-             Text(_user!.address.isNotEmpty ? _user!.address : 'Chưa có địa chỉ giao hàng', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+             Text(_user!.address.isNotEmpty ? _user!.address.trim() : 'Chưa có địa chỉ giao hàng', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           ] else 
              const Center(child: CircularProgressIndicator()),
           
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            width: double.infinity,
-            decoration: BoxDecoration(color: const Color(0xFFEBE4DB).withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
-            alignment: Alignment.center,
-            child: const Text('Mặc định', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-          )
+           const SizedBox(height: 12),
+           TextField(
+             controller: _noteController,
+             decoration: InputDecoration(
+               hintText: 'Ghi chú cho đơn hàng (tùy chọn)',
+               hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
+               border: OutlineInputBorder(
+                 borderRadius: BorderRadius.circular(8),
+                 borderSide: BorderSide(color: Colors.grey[300]!),
+               ),
+               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+             ),
+             style: const TextStyle(fontSize: 13),
+             maxLines: 1,
+           ),
+           const SizedBox(height: 12),
+          // Container(
+          //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          //   width: double.infinity,
+          //   decoration: BoxDecoration(color: const Color(0xFFEBE4DB).withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
+          //   alignment: Alignment.center,
+          //   child: const Text('Mặc định', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+          // )
         ],
       ),
     );
@@ -311,43 +406,184 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Phương thức thanh toán', style: TextStyle(fontWeight: FontWeight.bold)),
+          // const SizedBox(height: 12), // Removed header button
           const SizedBox(height: 12),
           StreamBuilder<List<PaymentMethod>>(
             stream: _userRepo.getPaymentMethods(_userId),
             builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.isEmpty) return const Text('Chưa có phương thức thanh toán');
+              if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
               
-              final methods = snapshot.data!;
-              final defaultMethod = methods.firstWhere((m) => m.isDefault, orElse: () => methods.first); // fallback
+              final allMethods = List<PaymentMethod>.from(snapshot.data ?? []);
+              
+              // 1. Resolve Cards
+              final cards = allMethods.where((m) => m.type != 'cod' && m.type != 'momo').toList();
+              // Sort cards by default so we pick the best one initially
+              cards.sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+              
+              // Init _displayCard if needed
+              if (_displayCard == null && cards.isNotEmpty) {
+                 // Try to find one that is default
+                 _displayCard = cards.first; 
+              }
+              // If _displayCard is dirty (deleted), reset
+              if (_displayCard != null && !cards.any((c) => c.id == _displayCard!.id)) {
+                 _displayCard = cards.isNotEmpty ? cards.first : null;
+              }
 
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFEBE4DB).withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
-                child: Row(
-                  children: [
-                     Expanded(
-                       child: Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
+              // 2. Resolve COD
+              var cod = allMethods.firstWhere(
+                  (m) => m.type == 'cod', 
+                  orElse: () => PaymentMethod(id: 'cod', type: 'cod', title: 'Thanh toán khi nhận hàng', subtitle: 'Phù hợp cho mọi đơn hàng', isDefault: false)
+              );
+              
+              // 3. Resolve Momo
+              var momo = allMethods.firstWhere(
+                  (m) => m.type == 'momo', 
+                  orElse: () => PaymentMethod(id: 'momo', type: 'momo', title: 'Ví MoMo', subtitle: 'SĐT: 0323232646', isDefault: false)
+              );
+
+              // Auto-select initial (once)
+              if (_selectedPaymentMethod == null) {
+                  // Check if any is default in DB
+                  if (allMethods.any((m) => m.isDefault)) {
+                     final def = allMethods.firstWhere((m) => m.isDefault);
+                     // If default is a card, ensure _displayCard matches
+                     if (def.type != 'cod' && def.type != 'momo') {
+                        _displayCard = def;
+                     }
+                     WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) setState(() => _selectedPaymentMethod = def);
+                     });
+                  } else {
+                     // Default to COD if no default set
+                     WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) setState(() => _selectedPaymentMethod = cod);
+                     });
+                  }
+              }
+
+              // Display List: Card (if exists), COD, Momo
+              return Column(
+                children: [
+                  // CARD SLOT
+                  if (_displayCard != null)
+                     RadioListTile<String>(
+                       value: _displayCard!.id,
+                       groupValue: _selectedPaymentMethod?.id,
+                       activeColor: const Color(0xFFC69C6D),
+                       secondary: _getPaymentIcon(_displayCard!.type),
+                       title: Row(
                          children: [
-                           Text(defaultMethod.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                           Text(defaultMethod.subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                           Expanded(child: Text(_getMaskedTitle(_displayCard!.title), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                           GestureDetector(
+                             onTap: () => _showCardPicker(cards),
+                             child: const Text('Thay đổi', style: TextStyle(color: Colors.blue, fontSize: 12)),
+                           )
                          ],
                        ),
+                       subtitle: Text(_displayCard!.subtitle.toUpperCase(), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                       onChanged: (val) {
+                          setState(() => _selectedPaymentMethod = _displayCard);
+                          _userRepo.setDefaultPaymentMethod(_userId, _displayCard!.id);
+                       },
                      ),
-                  ],
-                ),
+                  
+                  // COD SLOT
+                  RadioListTile<String>(
+                     value: cod.id,
+                     groupValue: _selectedPaymentMethod?.id,
+                     activeColor: const Color(0xFFC69C6D),
+                     secondary: _getPaymentIcon(cod.type),
+                     title: Text(cod.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                     subtitle: Text(cod.subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                     onChanged: (val) {
+                        setState(() => _selectedPaymentMethod = cod);
+                        _userRepo.setDefaultPaymentMethod(_userId, cod.id);
+                     },
+                  ),
+
+                  // MOMO SLOT
+                  RadioListTile<String>(
+                     value: momo.id,
+                     groupValue: _selectedPaymentMethod?.id,
+                     activeColor: const Color(0xFFC69C6D),
+                     secondary: _getPaymentIcon(momo.type),
+                     title: Text(momo.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                     subtitle: Text(momo.subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                     onChanged: (val) {
+                        setState(() => _selectedPaymentMethod = momo);
+                        _userRepo.setDefaultPaymentMethod(_userId, momo.id);
+                     },
+                  ),
+                ],
               );
             },
           ),
-          const SizedBox(height: 12),
-          const Text('Thẻ ngân hàng', style: TextStyle(fontWeight: FontWeight.w500)),
-          const Text('Visa, Master, ATM nội địa', style: TextStyle(color: Colors.grey, fontSize: 10)),
-          const SizedBox(height: 8),
-          const Text('Ví điện tử', style: TextStyle(fontWeight: FontWeight.w500)),
-          const Text('Momo, ZaloPay, VNPay...', style: TextStyle(color: Colors.grey, fontSize: 10)),
         ],
       ),
     );
+  }
+
+  String _getMaskedTitle(String title) {
+     if (title.contains('Visa ending')) {
+        final parts = title.split(' ');
+        if (parts.isNotEmpty) {
+            final last = parts.last;
+            if (RegExp(r'^\d+$').hasMatch(last)) {
+               // Replace "Visa ending" with "***"
+               return '*** $last';
+            }
+        }
+        return title.replaceFirst('Visa ending', '***');
+     }
+     return title;
+  }
+
+  void _showCardPicker(List<PaymentMethod> cards) {
+      showModalBottomSheet(
+        context: context,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (context) {
+           return Container(
+             padding: const EdgeInsets.all(16),
+             child: Column(
+               mainAxisSize: MainAxisSize.min,
+               children: [
+                 const Text('Chọn thẻ thanh toán', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                 const SizedBox(height: 16),
+                 ...cards.where((c) => ['visa', 'card'].contains(c.type.toLowerCase())).map((card) => ListTile(
+                    leading: const Icon(Icons.credit_card, color: Colors.blue),
+                    title: Text(_getMaskedTitle(card.title)),
+                    subtitle: Text(card.subtitle),
+                    trailing: _displayCard?.id == card.id ? const Icon(Icons.check, color: Colors.green) : null,
+                    onTap: () {
+                       setState(() {
+                         _displayCard = card;
+                         _selectedPaymentMethod = card;
+                       });
+                       _userRepo.setDefaultPaymentMethod(_userId, card.id);
+                       Navigator.pop(context);
+                    },
+                 )),
+               ],
+             ),
+           );
+        }
+      );
+  }
+
+  Widget _getPaymentIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'visa':
+      case 'card':
+        return const Icon(Icons.credit_card, color: Colors.blue);
+      case 'momo':
+        return const Icon(Icons.account_balance_wallet, color: Colors.pink);
+      case 'cod':
+        return const Icon(Icons.local_shipping, color: Colors.orange);
+      default:
+        return const Icon(Icons.payment, color: Colors.grey);
+    }
   }
 
   Widget _buildOrderSummary(List<CartItem> cartItems) {
@@ -366,7 +602,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
-                    imageUrl: item.product.imageUrl,
+                    imageUrl: item.image,
                     width: 60, height: 60, fit: BoxFit.cover,
                     placeholder: (_,__) => const Center(child: CircularProgressIndicator()),
                   ),
@@ -390,7 +626,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  Widget _buildCostDetails(double subtotal, double shipping, double discount, double total) {
+  Widget _buildCostDetails(double subtotal, double shipping, double total) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
@@ -398,7 +634,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         children: [
           _buildRow('Tạm tính', subtotal),
           _buildRow('Phí vận chuyển', shipping),
-          _buildRow('Mã giảm giá', discount),
+          // _buildRow('Mã giảm giá', discount),
           const Divider(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

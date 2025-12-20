@@ -18,6 +18,10 @@ class FavoriteNotifier extends Notifier<List<Product>> {
   bool isFavorite(String productId) {
     return state.any((p) => p.id == productId);
   }
+
+  void clearFavorites() {
+    state = [];
+  }
 }
 
 final favoriteProvider = NotifierProvider<FavoriteNotifier, List<Product>>(FavoriteNotifier.new);

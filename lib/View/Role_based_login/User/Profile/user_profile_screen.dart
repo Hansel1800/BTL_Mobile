@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_payment_methods_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_profile_detail_screen.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_order_history_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -175,7 +176,17 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         );
                       },
                     ),
-                    // Removed "Đơn hàng của tôi" and "Yêu thích" as requested
+                    _buildDivider(),
+                    _buildMenuItem(
+                      icon: Icons.shopping_bag_outlined,
+                      title: 'Đơn hàng của tôi',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const UserOrderHistoryScreen()),
+                        );
+                      },
+                    ),
                     _buildDivider(),
                     _buildMenuItem(
                       icon: Icons.settings_outlined,

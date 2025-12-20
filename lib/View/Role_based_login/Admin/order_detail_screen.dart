@@ -1,5 +1,7 @@
 import 'package:do_an_quan_ao/Model/order_model.dart';
 import 'package:flutter/material.dart';
+import 'package:do_an_quan_ao/Services/order_repository.dart';
+import 'package:do_an_quan_ao/View/Widgets/success_dialog.dart';
 
 class OrderDetailScreen extends StatelessWidget {
   final Order order;
@@ -34,7 +36,7 @@ class OrderDetailScreen extends StatelessWidget {
           children: [
             _buildOrderInfoCard(),
             const SizedBox(height: 16),
-            _buildCustomerInfoCard(),
+            _buildCustomerInfoCard(context),
             const SizedBox(height: 16),
             _buildProductListCard(),
             const SizedBox(height: 16),
@@ -100,7 +102,7 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCustomerInfoCard() {
+  Widget _buildCustomerInfoCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -126,23 +128,21 @@ class OrderDetailScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const Text('Ghi chú:  Giao trong giờ hành chính', style: TextStyle(color: Colors.grey, fontSize: 12)),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {},
-                  child: const Text('Gọi khách', style: TextStyle(color: Colors.black)),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                     _showStatusUpdateDialog(context);
+                  },
+                  icon: const Icon(Icons.edit, size: 16),
+                  label: const Text('Cập nhật trạng thái'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {},
-                  child: const Text('Nhắn Zalo/SMS', style: TextStyle(color: Colors.black)),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -240,4 +240,64 @@ class OrderDetailScreen extends StatelessWidget {
   }
 
 
+  void _showStatusUpdateDialog(BuildContext context) {
+    final statuses = ['Chờ xác nhận', 'Đang đóng gói', 'Đang giao hàng', 'Giao hàng thành công', 'Đã hủy'];
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cập nhật trạng thái'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: statuses.map((status) => ListTile(
+            title: Text(status),
+            leading: order.status == status ? const Icon(Icons.check, color: Colors.green) : null,
+            onTap: () async {
+               Navigator.pop(context); // Close selection dialog
+               try {
+                  // Assuming OrderRepository is available or accessible
+                  // If not imported, I will need to fix imports.
+                  // For now, let's try to dynamic import or just use class name and fix later.
+                  // But 'OrderRepository' name must be valid.
+                  // I'll add imports in next step.
+                  // await OrderRepository().updateOrderStatus(order.id, status);
+                  // Update logic...
+                  // Since I can't call OrderRepository without import, I'll assume it's imported or I add it.
+                  
+                  // Mock update for now or real if I add import
+                  // await OrderRepository().updateOrderStatus(order.id, status);
+                  
+                  _confirmUpdate(context, status);
+               } catch (e) {
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+               }
+            },
+          )).toList(),
+        ),
+      ),
+    );
+  }
+
+  void _confirmUpdate(BuildContext context, String status) async {
+     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+     
+     try {
+       await OrderRepository().updateOrderStatus(order.id, status);
+       
+       if (context.mounted) {
+           Navigator.pop(context); // Pop loading
+           showDialog(
+               context: context,
+               builder: (_) => SuccessDialog(
+                   title: 'Cập nhật thành công', 
+                   onDismiss: () {
+                      if (context.mounted) Navigator.pop(context); // Return to list
+                   }
+               )
+           );
+       }
+     } catch (e) {
+        if (context.mounted) Navigator.pop(context); // Pop loading
+        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+     }
+  }
 }

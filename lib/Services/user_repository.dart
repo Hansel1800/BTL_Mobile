@@ -90,4 +90,12 @@ class UserRepository {
     }
     await batch.commit();
   }
+  Future<void> updatePaymentMethod(String userId, PaymentMethod method) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('payment_methods')
+        .doc(method.id)
+        .update(method.toJson());
+  }
 }

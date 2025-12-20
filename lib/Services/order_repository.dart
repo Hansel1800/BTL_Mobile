@@ -28,7 +28,9 @@ class OrderRepository {
         products: order.products,
         totalPrice: order.totalPrice,
         status: order.status,
+        paymentMethod: order.paymentMethod,
         createdAt: order.createdAt,
+        note: order.note,
       );
       await docRef.set(newOrder.toJson());
       print('Order added to Firestore: ${docRef.id}');
@@ -48,6 +50,17 @@ class OrderRepository {
     return snapshot.docs.isNotEmpty;
   }
 
+  Future<void> updateOrderStatus(String orderId, String status) async {
+    try {
+      await _firestore.collection(_collection).doc(orderId).update({
+        'status': status,
+      });
+    } catch (e) {
+      print('Error updating order status: $e');
+      rethrow;
+    }
+  }
+
   Future<void> updateOrder(model.Order order) async {
     try {
       await _firestore.collection(_collection).doc(order.id).update({
@@ -57,6 +70,7 @@ class OrderRepository {
         'products': order.products.map((item) => item.toJson()).toList(),
         'totalPrice': order.totalPrice,
         'status': order.status,
+        'paymentMethod': order.paymentMethod,
       });
     } catch (e) {
       print('Error updating order: $e');
@@ -71,5 +85,17 @@ class OrderRepository {
       print('Error deleting order: $e');
       rethrow;
     }
+  }
+
+  Stream<List<model.Order>> getOrdersByUserId(String userId) {
+    return _firestore
+        .collection(_collection)
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+      final orders = snapshot.docs.map((doc) => model.Order.fromSnapshot(doc)).toList();
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return orders;
+    });
   }
 }

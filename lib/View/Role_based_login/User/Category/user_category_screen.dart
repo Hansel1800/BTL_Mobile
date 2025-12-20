@@ -49,7 +49,7 @@ class _UserCategoryScreenState extends ConsumerState<UserCategoryScreen> {
                       color: Colors.grey[200],
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.tune, color: Colors.black),
+                    //child: const Icon(Icons.tune, color: Colors.black),
                   ),
                 ],
               ),

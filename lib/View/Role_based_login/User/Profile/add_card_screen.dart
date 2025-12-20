@@ -1,6 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:do_an_quan_ao/Services/user_repository.dart';
+import 'package:do_an_quan_ao/Model/payment_method_model.dart';
+import 'package:do_an_quan_ao/View/Widgets/success_dialog.dart';
 
 class AddCardScreen extends StatefulWidget {
   const AddCardScreen({super.key});
@@ -82,7 +86,7 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
     super.dispose();
   }
 
-  void _validateAndSave() {
+  Future<void> _validateAndSave() async {
     final rawCardNumber = _cardNumberController.text.replaceAll(' ', '');
     
     if (rawCardNumber.length != 16) {
@@ -115,11 +119,49 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
       return;
     }
 
-    // Success
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Thêm thẻ thành công!'), backgroundColor: Colors.green),
-    );
-    Navigator.pop(context);
+    // Save to Firestore
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final repo = UserRepository();
+        final method = PaymentMethod(
+          id: '',
+          type: 'VISA', // Simplified, could detect type based on bin
+          title: 'Visa ending ${rawCardNumber.substring(12)}',
+          subtitle: _cardHolderController.text.toUpperCase(),
+          details: {
+            'cardNumber': _cardNumberController.text, 
+            'expiry': _expiryController.text,
+            'holder': _cardHolderController.text,
+            'cvv': _cvvController.text 
+          }
+        );
+        await repo.addPaymentMethod(user.uid, method);
+      }
+
+      if (mounted) {
+        Navigator.pop(context); // Pop loader
+        
+        await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const SuccessDialog(title: 'Thêm thẻ thành công!')
+        );
+        
+        if (mounted) Navigator.pop(context); // Pop screen
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Pop loader
+        _showError('Lỗi khi lưu thẻ: $e');
+      }
+    }
   }
 
   void _showError(String message) {

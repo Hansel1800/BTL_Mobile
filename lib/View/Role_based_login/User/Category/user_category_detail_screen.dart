@@ -24,13 +24,26 @@ class UserCategoryDetailScreen extends ConsumerStatefulWidget {
 
 class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScreen> {
   String _selectedSort = 'Phổ biến nhất';
+  bool _showSearch = false;
+  final TextEditingController _searchController = TextEditingController();
+  
+  // Filter States
+  String? _selectedSize;
+  String? _selectedColor;
+  String? _selectedPriceRange; 
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: const Color(0xFFFFF0F5), // Lavender Blush / Light Pink
       body: SafeArea(
         child: Column(
           children: [
@@ -43,18 +56,55 @@ class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScr
                   // Note: In a real app, products would have a 'gender' field.
                   // For now, we will just filter by category.
                   final filteredProducts = products.where((p) {
-                     // Normalize strings for comparison
+                     // Search Filter
+                     if (_searchController.text.isNotEmpty) {
+                        final query = _searchController.text.toLowerCase();
+                        if (!p.name.toLowerCase().contains(query) && !p.category.toLowerCase().contains(query)) {
+                          return false;
+                        }
+                     }
+
+                     // Filter by Gender (Inclusive)
+                     final pGenderLowercase = p.gender.trim().toLowerCase();
+                     final targetGenderLowercase = widget.gender.trim().toLowerCase();
+                     bool genderMatch = false;
+
+                     if (targetGenderLowercase == 'nam') {
+                        genderMatch = (pGenderLowercase == 'nam' || pGenderLowercase == 'unisex');
+                     } else if (targetGenderLowercase == 'nữ') {
+                        genderMatch = (pGenderLowercase == 'nữ' || pGenderLowercase == 'unisex');
+                     } else {
+                        genderMatch = (pGenderLowercase == targetGenderLowercase);
+                     }
+                     
+                     if (!genderMatch) return false;
+
+                     // Filter by Size
+                     if (_selectedSize != null && !p.sizes.contains(_selectedSize)) {
+                       return false;
+                     }
+
+                     // Filter by Color
+                     if (_selectedColor != null && !p.colors.contains(_selectedColor)) {
+                       return false;
+                     }
+
+                     // Filter by Price
+                     if (_selectedPriceRange != null) {
+                        if (_selectedPriceRange == '< 200k') {
+                           if (p.price >= 200000) return false;
+                        } else if (_selectedPriceRange == '200k - 500k') {
+                           if (p.price < 200000 || p.price > 500000) return false;
+                        } else if (_selectedPriceRange == '> 500k') {
+                           if (p.price <= 500000) return false;
+                        }
+                     }
+
+                     // Filter by Category (Smart Matching)
                      final pCat = p.category.trim().toLowerCase();
                      final targetCat = widget.categoryName.trim().toLowerCase();
-                     final pGender = p.gender.trim();
-                     final targetGender = widget.gender.trim();
 
-                     // Filter by Gender (Strict)
-                     if (pGender != targetGender) return false;
-                     
-                     // Filter by Category (Smart Matching)
                      if (targetCat.contains('áo')) {
-                       // Match generic "áo" but also specific types like "sơ mi"
                        if (pCat.contains('áo') || pCat.contains('sơ mi') || pCat.contains('polo') || pCat.contains('sweater') || pCat.contains('hoodie')) {
                          return true;
                        }
@@ -75,6 +125,15 @@ class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScr
                      // Fallback simple containment
                      return pCat.contains(targetCat) || targetCat.contains(pCat);
                   }).toList();
+
+                  // Sorting Logic
+                  if (_selectedSort == 'Giá thấp - cao') {
+                    filteredProducts.sort((a, b) => a.price.compareTo(b.price));
+                  } else if (_selectedSort == 'Giá cao - thấp') {
+                    filteredProducts.sort((a, b) => b.price.compareTo(a.price));
+                  } else if (_selectedSort == 'Mới nhất') {
+                    
+                  }
 
                   if (filteredProducts.isEmpty) {
                     return const Center(
@@ -103,26 +162,30 @@ class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScr
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(color: Colors.grey.shade300),
                               ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.swap_vert, size: 16, color: Colors.black54),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _selectedSort,
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
+                              child: InkWell(
+                                onTap: _showSortBottomSheet,
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.swap_vert, size: 16, color: Colors.black54),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _selectedSort,
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
+
                       Expanded(
                         child: GridView.builder(
                           padding: const EdgeInsets.all(16),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            childAspectRatio: 0.68,
+                            childAspectRatio: 0.60,
                             crossAxisSpacing: 16,
                             mainAxisSpacing: 16,
                           ),
@@ -145,10 +208,41 @@ class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScr
     );
   }
 
+  void _showSortBottomSheet() {
+    final options = ['Phổ biến nhất', 'Giá thấp - cao', 'Giá cao - thấp', 'Mới nhất'];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text('Sắp xếp theo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            ),
+            ...options.map((option) => ListTile(
+              title: Text(option, style: TextStyle(color: _selectedSort == option ? const Color(0xFFD29062) : Colors.black)),
+              trailing: _selectedSort == option ? const Icon(Icons.check, color: Color(0xFFD29062)) : null,
+              onTap: () {
+                setState(() {
+                  _selectedSort = option;
+                });
+                Navigator.pop(context);
+              },
+            )),
+            const SizedBox(height: 20),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: const Color(0xFFF9F5F0), // Light beige header bg
+      color: const Color(0xFFFFF0F5), // Light Pink Header
       child: Row(
         children: [
           Container(
@@ -163,29 +257,55 @@ class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScr
             ),
           ),
           const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.categoryName,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          if (!_showSearch)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.categoryName,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    widget.categorySubtitle,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            )
+          else
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                Text(
-                  widget.categorySubtitle,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  overflow: TextOverflow.ellipsis,
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'Tìm kiếm ${widget.categoryName}...',
+                    border: InputBorder.none,
+                    hintStyle: const TextStyle(fontSize: 14),
+                  ),
+                  onChanged: (val) => setState(() {}),
                 ),
-              ],
+              ),
             ),
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.tune, color: Colors.black),
+          //   onPressed: () {},
+          // ),
           IconButton(
-            icon: const Icon(Icons.tune, color: Colors.black),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.black),
-            onPressed: () {},
+            icon: Icon(_showSearch ? Icons.close : Icons.search, color: Colors.black),
+            onPressed: () {
+              setState(() {
+                _showSearch = !_showSearch;
+                if (!_showSearch) _searchController.clear();
+              });
+            },
           ),
         ],
       ),
@@ -193,36 +313,171 @@ class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScr
   }
 
   Widget _buildFilterTabs() {
-    final filters = ['Size', 'Màu sắc', 'Khoảng giá', 'Thương hiệu', 'Chất liệu'];
+    // Extract colors dynamically from loaded products
+    final products = ref.watch(productsProvider).value ?? [];
+    
+    // Dynamic Colors
+    final List<String> availableColors = products
+        .expand((p) => p.colors)
+        .map((c) => c.trim())
+        .where((c) => c.isNotEmpty)
+        .toSet()
+        .toList();
+    availableColors.sort(); // Alphabetical
+
+    final colorsToShow = availableColors.isNotEmpty 
+        ? availableColors 
+        : ['Trắng', 'Đen', 'Xám', 'Đỏ', 'Xanh', 'Be', 'Vàng', 'Hồng', 'Nâu'];
+
+    // Dynamic Sizes
+    final List<String> availableSizes = products
+        .expand((p) => p.sizes)
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toSet()
+        .toList();
+    
+    // Custom Sort for Sizes
+    const sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'FreeSize'];
+    availableSizes.sort((a, b) {
+      // Normalize comparison (handle case sensitivity if needed, usually uppercase)
+      final sa = a.toUpperCase();
+      final sb = b.toUpperCase();
+      
+      int indexA = sizeOrder.indexOf(sa);
+      if (indexA == -1) indexA = sizeOrder.indexOf(a); // Try Exact
+      
+      int indexB = sizeOrder.indexOf(sb);
+      if (indexB == -1) indexB = sizeOrder.indexOf(b);
+
+      if (indexA != -1 && indexB != -1) return indexA.compareTo(indexB);
+      if (indexA != -1) return -1; // Known sizes come first
+      if (indexB != -1) return 1;
+      return a.compareTo(b); // Fallback to alphabetical
+    });
+
+    final sizesToShow = availableSizes.isNotEmpty
+        ? availableSizes
+        : ['S', 'M', 'L', 'XL', 'XXL'];
+
     return Container(
-      color: const Color(0xFFF9F5F0),
+      color: const Color(0xFFFFF0F5),
       padding: const EdgeInsets.only(left: 16, bottom: 16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: filters.map((filter) => Container(
-            margin: const EdgeInsets.only(right: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.local_offer_outlined, size: 14, color: Colors.grey[600]), // Generic icon
-                const SizedBox(width: 4),
-                Text(
-                  filter,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(width: 4),
-                Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.grey[600]),
-              ],
-            ),
-          )).toList(),
+          children: [
+            _buildFilterChip('Size', _selectedSize, sizesToShow),
+            _buildFilterChip('Màu sắc', _selectedColor, colorsToShow),
+            _buildFilterChip('Khoảng giá', _selectedPriceRange, ['< 200k', '200k - 500k', '> 500k']),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, String? selectedValue, List<String> options) {
+    final isSelected = selectedValue != null;
+    return GestureDetector(
+      onTap: () {
+        _showFilterOptions(label, options, selectedValue);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFD29062) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? Colors.transparent : Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.filter_list, 
+              size: 14, 
+              color: isSelected ? Colors.white : Colors.grey[600]
+            ),
+            const SizedBox(width: 4),
+            Text(
+              isSelected ? selectedValue : label,
+              style: TextStyle(
+                fontSize: 12, 
+                fontWeight: FontWeight.w500,
+                color: isSelected ? Colors.white : Colors.black87
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down, 
+              size: 16, 
+              color: isSelected ? Colors.white : Colors.grey[600]
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFilterOptions(String title, List<String> options, String? currentValue) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Chọn $title', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  if (currentValue != null)
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          if (title == 'Size') _selectedSize = null;
+                          if (title == 'Màu sắc') _selectedColor = null;
+                          if (title == 'Khoảng giá') _selectedPriceRange = null;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Xóa lọc', style: TextStyle(color: Colors.red)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: options.map((option) {
+                  final isSelected = option == currentValue;
+                  return ChoiceChip(
+                    label: Text(option),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        if (title == 'Size') _selectedSize = selected ? option : null;
+                        if (title == 'Màu sắc') _selectedColor = selected ? option : null;
+                        if (title == 'Khoảng giá') _selectedPriceRange = selected ? option : null;
+                      });
+                      Navigator.pop(context);
+                    },
+                    selectedColor: const Color(0xFFD29062),
+                    labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
+                    backgroundColor: Colors.grey[100],
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
     );
   }
 

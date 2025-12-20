@@ -28,6 +28,22 @@ class CartItem {
     }
     return product.price;
   }
+
+  String get image {
+    if (selectedSize != null && selectedColor != null) {
+       try {
+         final variant = product.variants.firstWhere(
+           (v) => v.size == selectedSize && v.color == selectedColor
+         );
+         if (variant.imageUrl != null && variant.imageUrl!.isNotEmpty) {
+           return variant.imageUrl!;
+         }
+       } catch (e) {
+         // Fallback
+       }
+    }
+    return product.imageUrl;
+  }
 }
 
 class CartNotifier extends Notifier<List<CartItem>> {
@@ -83,7 +99,7 @@ class CartNotifier extends Notifier<List<CartItem>> {
 
   double get subtotal => state.fold(0, (sum, item) => sum + (item.price * item.quantity));
   
-  double get total => subtotal > 0 ? subtotal + 30000 - 80000 : 0;
+  double get total => subtotal > 0 ? subtotal + 30000 : 0;
 }
 
 final cartProvider = NotifierProvider<CartNotifier, List<CartItem>>(CartNotifier.new);

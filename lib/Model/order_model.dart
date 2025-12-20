@@ -5,6 +5,7 @@ class OrderItem {
   final String productName;
   final int quantity;
   final double price;
+  final String imageUrl;
   final String? size;
   final String? color;
 
@@ -13,6 +14,7 @@ class OrderItem {
     required this.productName,
     required this.quantity,
     required this.price,
+    required this.imageUrl,
     this.size,
     this.color,
   });
@@ -23,6 +25,7 @@ class OrderItem {
       'productName': productName,
       'quantity': quantity,
       'price': price,
+      'imageUrl': imageUrl,
       'size': size,
       'color': color,
     };
@@ -34,6 +37,7 @@ class OrderItem {
       productName: json['productName'] ?? '',
       quantity: json['quantity'] ?? 0,
       price: (json['price'] ?? 0).toDouble(),
+      imageUrl: json['imageUrl'] ?? '',
       size: json['size'],
       color: json['color'],
     );
@@ -49,7 +53,9 @@ class Order {
   final List<OrderItem> products;
   final double totalPrice;
   final String status;
+  final String paymentMethod;
   final DateTime createdAt;
+  final String? note;
 
   Order({
     required this.id,
@@ -60,7 +66,9 @@ class Order {
     required this.products,
     required this.totalPrice,
     required this.status,
+    required this.paymentMethod,
     required this.createdAt,
+    this.note,
   });
 
   Map<String, dynamic> toJson() {
@@ -73,7 +81,9 @@ class Order {
       'products': products.map((item) => item.toJson()).toList(),
       'totalPrice': totalPrice,
       'status': status,
+      'paymentMethod': paymentMethod,
       'createdAt': Timestamp.fromDate(createdAt),
+      'note': note,
     };
   }
 
@@ -90,7 +100,9 @@ class Order {
           [],
       totalPrice: (json['totalPrice'] ?? 0).toDouble(),
       status: json['status'] ?? 'pending',
+      paymentMethod: json['paymentMethod'] ?? 'COD',
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      note: json['note'],
     );
   }
 
@@ -108,7 +120,9 @@ class Order {
           [],
       totalPrice: (data['totalPrice'] ?? 0).toDouble(),
       status: data['status'] ?? 'pending',
+      paymentMethod: data['paymentMethod'] ?? 'COD',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      note: data['note'],
     );
   }
 }

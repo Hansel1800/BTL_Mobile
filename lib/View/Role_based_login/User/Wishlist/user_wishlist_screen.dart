@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:do_an_quan_ao/ViewModel/favorite_provider.dart';
 import 'package:do_an_quan_ao/Model/product_model.dart';
 import 'package:intl/intl.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/user_main_screen.dart';
 
 class UserWishlistScreen extends ConsumerWidget {
   const UserWishlistScreen({super.key});
@@ -35,7 +36,7 @@ class UserWishlistScreen extends ConsumerWidget {
                        child: IconButton(
                          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                          onPressed: () {
-                           Navigator.maybePop(context);
+                           context.findAncestorStateOfType<UserMainScreenState>()?.navigateToTab(0);
                          },
                        ),
                      ),
@@ -63,7 +64,8 @@ class UserWishlistScreen extends ConsumerWidget {
                    child: IconButton(
                      icon: const Icon(Icons.delete_outline, size: 20),
                      onPressed: () {
-                       // Clear all logic? Or just show icon
+                       ref.read(favoriteProvider.notifier).clearFavorites();
+                       
                      },
                    ),
                  ),

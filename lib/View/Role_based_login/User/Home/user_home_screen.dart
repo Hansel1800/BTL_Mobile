@@ -7,6 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:do_an_quan_ao/ViewModel/favorite_provider.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_order_history_screen.dart';
+import 'package:do_an_quan_ao/Services/order_repository.dart';
+import 'package:do_an_quan_ao/Model/order_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UserHomeScreen extends ConsumerStatefulWidget {
   const UserHomeScreen({super.key});
@@ -58,6 +62,52 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
                               ),
                             ),
                           ],
+                        ),
+                        // Order History Icon with Badge
+                        StreamBuilder<List<Order>>(
+                          stream: OrderRepository().getOrdersByUserId(FirebaseAuth.instance.currentUser?.uid ?? ''),
+                          builder: (context, snapshot) {
+                            int count = 0;
+                            if (snapshot.hasData) {
+                              count = snapshot.data!.where((o) => o.status.toLowerCase() != 'đã hủy').length;
+                            }
+                            return Stack(
+                              clipBehavior: Clip.none, // Allow badge to overflow if needed, though positioned inside usually
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.receipt_long_outlined, color: Colors.black, size: 28),
+                                  onPressed: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const UserOrderHistoryScreen()));
+                                  },
+                                ),
+                                if (count > 0)
+                                  Positioned(
+                                    right: 5,
+                                    top: 5,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 16,
+                                        minHeight: 16,
+                                      ),
+                                      child: Text(
+                                        '$count',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
                         ),
 
                       ],

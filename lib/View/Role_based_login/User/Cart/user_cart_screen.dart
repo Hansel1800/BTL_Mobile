@@ -15,13 +15,13 @@ class UserCartScreen extends ConsumerWidget {
     final notifier = ref.read(cartProvider.notifier);
     
     // Calculations
+
     double subtotal = notifier.subtotal;
     double shipping = 30000;
-    double discount = 80000;
-    double total = subtotal + shipping - discount;
+    // double discount = 80000; // Removed per user request
+    double total = subtotal + shipping;
     if (subtotal == 0) {
       shipping = 0;
-      discount = 0;
       total = 0;
     }
 
@@ -43,7 +43,11 @@ class UserCartScreen extends ConsumerWidget {
                      child: IconButton(
                        icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                        onPressed: () {
-                          Navigator.maybePop(context);
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          } else {
+                            context.findAncestorStateOfType<UserMainScreenState>()?.navigateToTab(0);
+                          }
                        },
                      ),
                    ),
@@ -64,6 +68,19 @@ class UserCartScreen extends ConsumerWidget {
                 ],
               ),
             ),
+
+            // Progress Bar
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildStepCircle('1', true), 
+                _buildStepLine(),
+                _buildStepCircle('2', false),
+                _buildStepLine(),
+                _buildStepCircle('3', false),
+              ],
+            ),
+            const SizedBox(height: 16),
             
             // List
             Expanded(
@@ -99,7 +116,7 @@ class UserCartScreen extends ConsumerWidget {
                              child: SizedBox(
                                width: 80, height: 80,
                                child: CachedNetworkImage(
-                                 imageUrl: item.product.imageUrl,
+                                 imageUrl: item.image,
                                  fit: BoxFit.cover,
                                ),
                              ),
@@ -134,7 +151,7 @@ class UserCartScreen extends ConsumerWidget {
                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                    children: [
                                      Text(
-                                       '${NumberFormat('#,###').format(item.price * item.quantity)}đ', // Or unit price? Usually unit * quantity or just unit. Screenshot shows total maybe? Let's show unit price and total updates at bottom.
+                                       '${NumberFormat('#,###').format(item.price * item.quantity)}đ', 
                                        // Actually screenshot shows "199.000đ" which looks like unit price.
                                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD29062)),
                                      ),
@@ -184,7 +201,7 @@ class UserCartScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildSummaryRow('Tạm tính', subtotal),
-                    _buildSummaryRow('Ưu đãi', -discount, isDiscount: true), // Mock discount
+                    // _buildSummaryRow('Ưu đãi', -discount, isDiscount: true), // Removed
                     _buildSummaryRow('Phí vận chuyển (ước tính)', shipping),
                     const Divider(height: 24),
                     _buildSummaryRow('Tổng cộng', total, isTotal: true),
@@ -284,6 +301,33 @@ class UserCartScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStepCircle(String step, bool isActive) {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFFC69C6D) : const Color(0xFFEBE4DB),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        step,
+        style: TextStyle(
+          color: isActive ? Colors.white : Colors.grey,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepLine() {
+    return Container(
+      width: 40,
+      height: 2,
+      color: const Color(0xFFEBE4DB),
     );
   }
 }
