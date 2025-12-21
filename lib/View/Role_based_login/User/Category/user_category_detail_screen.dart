@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:do_an_quan_ao/Model/product_model.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Product/user_product_detail_screen.dart';
 import 'package:do_an_quan_ao/ViewModel/product_provider.dart';
@@ -10,12 +10,14 @@ class UserCategoryDetailScreen extends ConsumerStatefulWidget {
   final String categoryName;
   final String categorySubtitle;
   final String gender;
+  final bool autoFocusSearch;
 
   const UserCategoryDetailScreen({
     super.key,
     required this.categoryName,
     required this.categorySubtitle,
     required this.gender,
+    this.autoFocusSearch = false,
   });
 
   @override
@@ -24,13 +26,19 @@ class UserCategoryDetailScreen extends ConsumerStatefulWidget {
 
 class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScreen> {
   String _selectedSort = 'Phổ biến nhất';
-  bool _showSearch = false;
+  late bool _showSearch;
   final TextEditingController _searchController = TextEditingController();
   
   // Filter States
   String? _selectedSize;
   String? _selectedColor;
   String? _selectedPriceRange; 
+
+  @override
+  void initState() {
+    super.initState();
+    _showSearch = widget.autoFocusSearch;
+  }
 
   @override
   void dispose() {
@@ -103,6 +111,13 @@ class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScr
                      // Filter by Category (Smart Matching)
                      final pCat = p.category.trim().toLowerCase();
                      final targetCat = widget.categoryName.trim().toLowerCase();
+
+                     if (targetCat == 'tìm kiếm' || targetCat == 'tất cả') {
+                        // Skip category filter if strictly searching or viewing all
+                        // But wait, if searching, we relied on the search query check above.
+                        // If search query is empty and category is 'Tìm kiếm', show all? Yes.
+                        return true; 
+                     }
 
                      if (targetCat.contains('áo')) {
                        if (pCat.contains('áo') || pCat.contains('sơ mi') || pCat.contains('polo') || pCat.contains('sweater') || pCat.contains('hoodie')) {
@@ -513,11 +528,9 @@ class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScr
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                   child: AspectRatio(
                     aspectRatio: 1,
-                    child: CachedNetworkImage(
+                    child: UniversalImage(
                       imageUrl: product.imageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: Colors.grey[200]),
-                      errorWidget: (context, url, error) => const Icon(Icons.broken_image),
                     ),
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:do_an_quan_ao/Model/order_model.dart';
 import 'package:do_an_quan_ao/Model/product_model.dart';
 import 'package:do_an_quan_ao/ViewModel/order_provider.dart';
@@ -91,19 +92,12 @@ class TopProductDetailScreen extends ConsumerWidget {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: product.imageUrl.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: product.imageUrl,
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
-                              )
-                            : Container(
-                                width: 60,
-                                height: 60,
-                                color: Colors.grey.shade200,
-                                child: const Icon(Icons.image),
-                              ),
+                        child: UniversalImage(
+                          imageUrl: product.imageUrl,
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(

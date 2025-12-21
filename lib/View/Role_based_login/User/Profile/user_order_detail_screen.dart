@@ -1,3 +1,4 @@
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:do_an_quan_ao/Model/order_model.dart';
@@ -162,10 +163,11 @@ class _UserOrderDetailScreenState extends State<UserOrderDetailScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child:  Image.network(
-                            item.imageUrl.isNotEmpty ? item.imageUrl : 'https://via.placeholder.com/60',
-                            width: 60, height: 60, fit: BoxFit.cover,
-                            errorBuilder: (_,__,___) => const SizedBox(width: 60, height: 60, child: Icon(Icons.error)),
+                          child: UniversalImage(
+                            imageUrl: item.imageUrl,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
                           ),
                         ),
                         const SizedBox(width: 12),

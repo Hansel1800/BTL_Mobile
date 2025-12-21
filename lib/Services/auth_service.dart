@@ -13,6 +13,7 @@ class AuthService {
     required String name,
     required String email,
     required String password,
+    required String phone,
     required String role,
   }) async {
     try {
@@ -25,9 +26,33 @@ class AuthService {
 
       await _firestore.collection("users").doc(userCredential.user!.uid).set({
         'name': name.trim(),
+        'fullName': name.trim(),
         'email': email.trim(),
+        'phoneNumber': phone.trim(),
         'role': role,
+        "isNewUser": true, // Mark as new user for Welcome Dialog
         'createAt': FieldValue.serverTimestamp(),
+      });
+
+      // --- AUTO CREATE WELCOME VOUCHER ---
+      String userId = userCredential.user!.uid;
+      String voucherCode = "TV${userId.substring(0, 5).toUpperCase()}"; // E.g., TVAB123
+      
+      await _firestore.collection('vouchers').doc(voucherCode).set({
+        'id': voucherCode,
+        'code': voucherCode,
+        'title': 'Voucher thành viên mới',
+        'description': 'Giảm 10% cho đơn hàng đầu tiên',
+        'type': 'percent',
+        'value': 10,
+        'minOrderValue': 0,
+        'maxDiscount': 50000,
+        'startDate': FieldValue.serverTimestamp(),
+        'endDate': Timestamp.fromDate(DateTime.now().add(const Duration(days: 30))),
+        'usageLimit': 1,
+        'usedCount': 0,
+        'isActive': true,
+        'authorizedUsers': [userId], // Only this user can use it (optional logic)
       });
       return null; // thanh cong: khong co loi
     } catch (e) {

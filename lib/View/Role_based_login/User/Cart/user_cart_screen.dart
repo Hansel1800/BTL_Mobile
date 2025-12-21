@@ -1,29 +1,179 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:do_an_quan_ao/ViewModel/cart_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/user_main_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Checkout/checkout_screen.dart';
+import 'package:do_an_quan_ao/ViewModel/navigation_provider.dart';
 
-class UserCartScreen extends ConsumerWidget {
+class UserCartScreen extends ConsumerStatefulWidget {
   const UserCartScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UserCartScreen> createState() => _UserCartScreenState();
+}
+
+class _UserCartScreenState extends ConsumerState<UserCartScreen> {
+  final TextEditingController _voucherController = TextEditingController();
+  double _discountAmount = 0.0;
+  String? _appliedVoucherCode;
+  bool _isCheckingVoucher = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _voucherController.addListener(() {
+      if (_appliedVoucherCode != null && 
+          _voucherController.text.trim().toUpperCase() != _appliedVoucherCode) {
+        setState(() {
+          _discountAmount = 0;
+          _appliedVoucherCode = null;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _voucherController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _applyVoucher() async {
+    final code = _voucherController.text.trim().toUpperCase();
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập mã giảm giá')));
+      return;
+    }
+
+    setState(() {
+      _isCheckingVoucher = true;
+    });
+
+    try {
+      // Query by 'code' field
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('vouchers')
+          .where('code', isEqualTo: code)
+          .limit(1)
+          .get();
+
+      DocumentSnapshot<Map<String, dynamic>>? docSnapshot;
+      if (querySnapshot.docs.isNotEmpty) {
+        docSnapshot = querySnapshot.docs.first;
+      } else {
+        // Fallback to check doc ID
+        final doc = await FirebaseFirestore.instance.collection('vouchers').doc(code).get();
+        if (doc.exists) {
+          docSnapshot = doc;
+        }
+      }
+
+      if (docSnapshot == null || !docSnapshot.exists) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mã giảm giá không tồn tại')));
+        setState(() {
+           _discountAmount = 0;
+           _appliedVoucherCode = null;
+        });
+        return;
+      }
+
+      final data = docSnapshot.data()!;
+      
+      // Basic validation checks
+      final isActive = data['isActive'] ?? false;
+      final usageCount = data['usedCount'] ?? data['usageCount'] ?? 0;
+      final usageLimit = data['usageLimit'] ?? 0;
+      final startDate = (data['startDate'] as Timestamp).toDate();
+      final endDate = (data['endDate'] as Timestamp).toDate();
+      final now = DateTime.now();
+
+      if (!isActive) {
+        throw 'Mã giảm giá đã bị khóa';
+      }
+      if (now.isBefore(startDate) || now.isAfter(endDate)) {
+        throw 'Mã giảm giá đã hết hạn hoặc chưa có hiệu lực';
+      }
+      if (usageLimit > 0 && usageCount >= usageLimit) {
+        throw 'Mã giảm giá đã hết lượt sử dụng';
+      }
+
+      // Calculate discount
+      final notifier = ref.read(cartProvider.notifier);
+      final subtotal = notifier.subtotal;
+      final minOrderValue = (data['minOrderValue'] ?? 0).toDouble();
+
+      if (subtotal < minOrderValue) {
+        throw 'Đơn hàng chưa đạt giá trị tối thiểu ${NumberFormat('#,###').format(minOrderValue)}đ';
+      }
+
+      final discountType = data['type'] ?? data['discountType'] ?? 'fixed';
+      final discountValue = (data['value'] ?? data['discountValue'] ?? 0).toDouble();
+      final maxDiscount = (data['maxDiscount'] ?? 0).toDouble();
+      
+      double discount = 0;
+      if (discountType == 'percent') {
+        discount = subtotal * (discountValue / 100);
+        if (maxDiscount > 0 && discount > maxDiscount) {
+           discount = maxDiscount;
+        }
+      } else {
+        discount = discountValue;
+      }
+
+      // Validate discount doesn't exceed subtotal
+      if (discount > subtotal) discount = subtotal;
+
+      setState(() {
+        _discountAmount = discount;
+        _appliedVoucherCode = code;
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Áp dụng mã $code thành công!')));
+
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+      setState(() {
+        _discountAmount = 0;
+        _appliedVoucherCode = null;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCheckingVoucher = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final cartItems = ref.watch(cartProvider);
     final notifier = ref.read(cartProvider.notifier);
     
     // Calculations
-
     double subtotal = notifier.subtotal;
-    double shipping = 30000;
-    // double discount = 80000; // Removed per user request
-    double total = subtotal + shipping;
-    if (subtotal == 0) {
-      shipping = 0;
-      total = 0;
+    // Shipping is determined at checkout based on location
+    double shipping = 0; 
+
+    // Recalculate discount if subtotal changes (to ensure not > subtotal or min order value)
+    // For simplicity, we keep _discountAmount but cap it at subtotal
+    if (_discountAmount > subtotal) {
+       _discountAmount = subtotal;
     }
+    // If subtotal is 0, reset everything
+    if (subtotal == 0) {
+      _discountAmount = 0;
+    }
+
+    double total = subtotal + shipping - _discountAmount;
+    if (total < 0) total = 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -46,7 +196,7 @@ class UserCartScreen extends ConsumerWidget {
                           if (Navigator.canPop(context)) {
                             Navigator.pop(context);
                           } else {
-                            context.findAncestorStateOfType<UserMainScreenState>()?.navigateToTab(0);
+                            ref.read(navigationProvider.notifier).setIndex(0);
                           }
                        },
                      ),
@@ -115,10 +265,10 @@ class UserCartScreen extends ConsumerWidget {
                              borderRadius: BorderRadius.circular(8),
                              child: SizedBox(
                                width: 80, height: 80,
-                               child: CachedNetworkImage(
-                                 imageUrl: item.image,
-                                 fit: BoxFit.cover,
-                               ),
+                                 child: UniversalImage(
+                                   imageUrl: item.image,
+                                   fit: BoxFit.cover,
+                                 ),
                              ),
                            ),
                            const SizedBox(width: 12),
@@ -152,7 +302,6 @@ class UserCartScreen extends ConsumerWidget {
                                    children: [
                                      Text(
                                        '${NumberFormat('#,###').format(item.price * item.quantity)}đ', 
-                                       // Actually screenshot shows "199.000đ" which looks like unit price.
                                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD29062)),
                                      ),
                                      
@@ -201,8 +350,9 @@ class UserCartScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildSummaryRow('Tạm tính', subtotal),
-                    // _buildSummaryRow('Ưu đãi', -discount, isDiscount: true), // Removed
-                    _buildSummaryRow('Phí vận chuyển (ước tính)', shipping),
+                    if (_discountAmount > 0)
+                      _buildSummaryRow('Ưu đãi', -_discountAmount, isDiscount: true),
+                    // Removed Shipping Fee Row per user request
                     const Divider(height: 24),
                     _buildSummaryRow('Tổng cộng', total, isTotal: true),
                     const SizedBox(height: 16),
@@ -210,25 +360,28 @@ class UserCartScreen extends ConsumerWidget {
                     // Coupon Input
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: TextField(
+                            controller: _voucherController,
                             decoration: InputDecoration(
-                              hintText: 'Nhập mã giảm giá',
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
-                              suffixIcon: Icon(Icons.confirmation_number_outlined, size: 20),
+                              hintText: _appliedVoucherCode != null ? 'Đã dùng: $_appliedVoucherCode' : 'Nhập mã giảm giá',
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+                              suffixIcon: const Icon(Icons.confirmation_number_outlined, size: 20),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: _isCheckingVoucher ? null : _applyVoucher,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFEBE4DB),
                             foregroundColor: Colors.black,
                             elevation: 0,
                           ),
-                          child: const Text('Áp dụng'),
+                          child: _isCheckingVoucher 
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Text('Áp dụng'),
                         )
                       ],
                     ),
@@ -238,6 +391,19 @@ class UserCartScreen extends ConsumerWidget {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
+                             if (cartItems.isEmpty) {
+                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Giỏ hàng trống!')));
+                               return;
+                             }
+                             // Pass voucher info to checkout if needed (typically handled by a provider or argument)
+                             // For simplicity here, we assume Checkout regenerates logic or we pass basic arguments?
+                             // User asked that "tạm tính" in Cart takes voucher. 
+                             // Usually Checkout re-verifies. 
+                             // We'll pass the voucher code to CheckoutScreen via arguments if possible, or simple let user re-apply.
+                             // But wait, the user said "voucher... hiển thị dialog phải là mã sinh ra ở dữ liệu thật".
+                             // And "Áp dụng mã khuyến mãi phải trừ thẳng vào giá".
+                             // We implemented that.
+                             
                              Navigator.push(context, MaterialPageRoute(builder: (context) => const CheckoutScreen()));
                           },
                           style: ElevatedButton.styleFrom(

@@ -1,5 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/Admin/admin_chat_list_screen.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:do_an_quan_ao/Model/product_model.dart';
+import 'package:do_an_quan_ao/Services/chat_service.dart';
+import 'package:do_an_quan_ao/Model/chat_model.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/Admin/add_edit_product_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/Admin/dashboard_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/Admin/order_management_screen.dart';
@@ -53,18 +57,12 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           if (didPop) {
             return;
           }
-          // Handle back button for nested navigators
           final NavigatorState? navigator = _navigatorKeys[selectedIndex].currentState;
           if (navigator != null && navigator.canPop()) {
             navigator.pop();
           } else {
-            // If on the first tab, exit app. Otherwise, go to first tab.
             if (selectedIndex != 0) {
                ref.read(adminIndexProvider.notifier).setIndex(0);
-            } else {
-               // Allow app exit
-               // SystemNavigator.pop(); // Optional: explicit exit
-               // For now, we can just let it stay or implement double-back-to-exit
             }
           }
         },
@@ -72,6 +70,47 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           index: selectedIndex,
           children: _screens,
         ),
+      ),
+      floatingActionButton: StreamBuilder<List<ChatSession>>(
+        stream: ChatService().getChatSessions(),
+        builder: (context, snapshot) {
+          int unreadCount = 0;
+          if (snapshot.hasData) {
+             unreadCount = snapshot.data!.where((s) => !s.isReadByAdmin).length;
+          }
+          return FloatingActionButton(
+             onPressed: () {
+               Navigator.of(context, rootNavigator: true).push(
+                 MaterialPageRoute(builder: (_) => const AdminChatListScreen()),
+               );
+             },
+             backgroundColor: Colors.blue,
+             child: Stack(
+               clipBehavior: Clip.none,
+               children: [
+                 const Icon(Icons.chat),
+                 if (unreadCount > 0)
+                   Positioned(
+                     right: -4,
+                     top: -4,
+                     child: Container(
+                       padding: const EdgeInsets.all(4),
+                       decoration: const BoxDecoration(
+                         color: Colors.red,
+                         shape: BoxShape.circle,
+                       ),
+                       constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                       child: Text(
+                         '$unreadCount',
+                         style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                         textAlign: TextAlign.center,
+                       ),
+                     ),
+                   )
+               ],
+             ),
+          );
+        }
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -117,6 +156,10 @@ class ProductListTab extends ConsumerStatefulWidget {
 
 class _ProductListTabState extends ConsumerState<ProductListTab> {
   String _selectedGenderFilter = 'Tất cả';
+  String _searchQuery = '';
+  // 'ALL', 'SELLING', 'LOW_STOCK'
+  String _selectedStatusFilter = 'ALL'; 
+
 
   @override
   Widget build(BuildContext context) {
@@ -229,18 +272,23 @@ class _ProductListTabState extends ConsumerState<ProductListTab> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
-                          children: const [
+                          children: [
                             Icon(Icons.search, color: Colors.grey),
                             SizedBox(width: 8),
                             Expanded(
                               child: TextField(
-                                decoration: InputDecoration(
+                                onChanged: (value) {
+                                  setState(() {
+                                    _searchQuery = value;
+                                  });
+                                },
+                                decoration: const InputDecoration(
                                   hintText: "Tìm theo tên, SKU...",
                                   border: InputBorder.none,
                                   isDense: true,
                                   contentPadding: EdgeInsets.zero,
                                 ),
-                                style: TextStyle(fontSize: 14),
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ),
                           ],
@@ -255,11 +303,17 @@ class _ProductListTabState extends ConsumerState<ProductListTab> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildFilterChip("Đang bán", true),
+                      _buildFilterChip("Đang bán", _selectedStatusFilter == 'SELLING', () {
+                        setState(() {
+                          _selectedStatusFilter = _selectedStatusFilter == 'SELLING' ? 'ALL' : 'SELLING';
+                        });
+                      }),
                       const SizedBox(width: 8),
-                      _buildFilterChip("Sắp hết hàng", false),
-                      const SizedBox(width: 8),
-                      _buildFilterChip("Ẩn", false),
+                      _buildFilterChip("Sắp hết hàng", _selectedStatusFilter == 'LOW_STOCK', () {
+                        setState(() {
+                           _selectedStatusFilter = _selectedStatusFilter == 'LOW_STOCK' ? 'ALL' : 'LOW_STOCK';
+                        });
+                      }),
                     ],
                   ),
                 ),
@@ -293,8 +347,30 @@ class _ProductListTabState extends ConsumerState<ProductListTab> {
               data: (products) {
                 // Filter by Gender
                 final filteredProducts = products.where((p) {
-                   if (_selectedGenderFilter == 'Tất cả') return true;
-                   return p.gender == _selectedGenderFilter;
+                   // Gender Filter
+                   if (_selectedGenderFilter != 'Tất cả' && p.gender != _selectedGenderFilter) {
+                     return false;
+                   }
+
+                   // Search Filter
+                   if (_searchQuery.isNotEmpty) {
+                     final query = _searchQuery.toLowerCase();
+                     final name = p.name.toLowerCase();
+                     final sku = 'SKU-${p.id.substring(0, 6).toUpperCase()}'.toLowerCase(); // Match UI construction
+                     // Also check real SKU if model has it later, for now match UI
+                     if (!name.contains(query) && !sku.contains(query)) {
+                       return false;
+                     }
+                   }
+
+                   // Status Filter
+                   if (_selectedStatusFilter == 'SELLING') {
+                     if (p.stock <= 0) return false;
+                   } else if (_selectedStatusFilter == 'LOW_STOCK') {
+                     if (p.stock <= 0 || p.stock >= 10) return false;
+                   }
+
+                   return true;
                 }).toList();
 
                 // Group products by category
@@ -388,20 +464,23 @@ class _ProductListTabState extends ConsumerState<ProductListTab> {
     );
   }
 
-  Widget _buildFilterChip(String label, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.grey.shade200 : const Color(0xFFF5F7FA),
-        borderRadius: BorderRadius.circular(20),
-        border: isSelected ? null : Border.all(color: Colors.transparent),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          color: Colors.black,
+  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue.withOpacity(0.1) : const Color(0xFFF5F7FA),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? Colors.blue : Colors.transparent),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? Colors.blue : Colors.black,
+          ),
         ),
       ),
     );
@@ -451,11 +530,9 @@ class _ProductListTabState extends ConsumerState<ProductListTab> {
                   height: 60,
                   color: Colors.grey[100],
                   child: product.imageUrl.isNotEmpty
-                      ? CachedNetworkImage(
+                      ? UniversalImage(
                           imageUrl: product.imageUrl,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                          errorWidget: (context, url, error) => const Center(child: Text("IMG", style: TextStyle(color: Colors.grey, fontSize: 10))),
                         )
                       : const Center(child: Text("IMG", style: TextStyle(color: Colors.grey, fontSize: 10))),
                 ),
@@ -517,7 +594,7 @@ class _ProductListTabState extends ConsumerState<ProductListTab> {
                  Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => AddEditProductScreen(product: product),
+                      builder: (_) => AddEditProductScreen(product: product, isReadOnly: true),
                     ),
                   );
               }),

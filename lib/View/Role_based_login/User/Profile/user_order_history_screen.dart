@@ -1,5 +1,6 @@
 import 'package:do_an_quan_ao/Model/order_model.dart';
 import 'package:do_an_quan_ao/Services/order_repository.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -154,15 +155,14 @@ class _UserOrderHistoryScreenState extends State<UserOrderHistoryScreen> {
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: Row(
                           children: [
-                            Container(
-                              width: 50, height: 50,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(8),
-                                image: DecorationImage(
-                                  image: NetworkImage(product.imageUrl.isNotEmpty ? product.imageUrl : 'https://via.placeholder.com/50'),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: SizedBox(
+                                width: 50,
+                                height: 50,
+                                child: UniversalImage(
+                                  imageUrl: product.imageUrl,
                                   fit: BoxFit.cover,
-                                  onError: (_, __) {},
                                 ),
                               ),
                             ),

@@ -1,8 +1,10 @@
 import 'package:do_an_quan_ao/Model/order_model.dart';
 import 'package:do_an_quan_ao/Model/user_model.dart';
 import 'package:do_an_quan_ao/ViewModel/order_provider.dart';
+import 'package:do_an_quan_ao/ViewModel/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/Admin/order_detail_screen.dart';
 import 'package:intl/intl.dart';
 
 class UserDetailScreen extends ConsumerWidget {
@@ -12,116 +14,132 @@ class UserDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(usersProvider);
     final ordersAsync = ref.watch(ordersProvider);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Chi tiết user',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              shape: BoxShape.circle,
+    return userAsync.when(
+      data: (users) {
+        // Find the specific user to get live updates
+        final liveUser = users.firstWhere(
+          (u) => u.id == user.id,
+          orElse: () => user, // Fallback if not found (e.g. deleted or error)
+        );
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF5F7FA),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
+              onPressed: () => Navigator.pop(context),
             ),
-            child: Text(
-              _getInitials(user.name),
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+            title: const Text(
+              'Chi tiết user',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            centerTitle: true,
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  _getInitials(liveUser.name),
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-      body: ordersAsync.when(
-        data: (orders) {
-          // Filter orders for this user
-          final userOrders = orders.where((o) {
-            if (user.phoneNumber.isNotEmpty && o.customerPhone == user.phoneNumber) {
-              return true;
-            }
-            if (user.phoneNumber.isEmpty && o.customerName.toLowerCase() == user.name.toLowerCase()) {
-              return true;
-            }
-            return false;
-          }).toList();
-
-          // Sort by date desc
-          userOrders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-          final totalSpent = userOrders.fold<double>(0, (sum, o) => sum + o.totalPrice);
-          final avgOrderValue = userOrders.isNotEmpty ? totalSpent / userOrders.length : 0.0;
-          final lastOrderTime = userOrders.isNotEmpty 
-              ? _formatTime(userOrders.first.createdAt) 
-              : 'Chưa có đơn';
-
-          // Try to get address from user profile first, then latest order
-          final address = user.address.isNotEmpty 
-              ? user.address 
-              : (userOrders.isNotEmpty ? userOrders.first.customerAddress : 'Chưa cập nhật');
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildProfileCard(user),
-                const SizedBox(height: 16),
-                Row(
+          body: ordersAsync.when(
+            data: (orders) {
+              // Filter orders for this user
+              final userOrders = orders.where((o) {
+                if (liveUser.phoneNumber.isNotEmpty && o.customerPhone == liveUser.phoneNumber) {
+                  return true;
+                }
+                if (liveUser.phoneNumber.isEmpty && o.customerName.toLowerCase() == liveUser.name.toLowerCase()) {
+                  return true;
+                }
+                return false;
+              }).toList();
+    
+              // Sort by date desc
+              userOrders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    
+              final totalSpent = userOrders.fold<double>(0, (sum, o) => sum + o.totalPrice);
+              final avgOrderValue = userOrders.isNotEmpty ? totalSpent / userOrders.length : 0.0;
+              final lastOrderTime = userOrders.isNotEmpty 
+                  ? _formatTime(userOrders.first.createdAt) 
+                  : 'Chưa có đơn';
+    
+              // Try to get address from user profile first, then latest order
+              final address = liveUser.address.isNotEmpty 
+                  ? liveUser.address 
+                  : (userOrders.isNotEmpty ? userOrders.first.customerAddress : 'Chưa cập nhật');
+    
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   children: [
-                    Expanded(
-                      child: _buildStatCard(
-                        'Tổng đơn',
-                        '${userOrders.length}',
-                        'Lần cuối $lastOrderTime',
-                      ),
+                    _buildProfileCard(liveUser),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            'Tổng đơn',
+                            '${userOrders.length}',
+                            'Lần cuối $lastOrderTime',
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildStatCard(
+                            'Tổng chi tiêu',
+                            _formatCurrency(totalSpent),
+                            'Trung bình ${_formatCurrency(avgOrderValue)}/đơn',
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStatCard(
-                        'Tổng chi tiêu',
-                        _formatCurrency(totalSpent),
-                        'Trung bình ${_formatCurrency(avgOrderValue)}/đơn',
-                      ),
-                    ),
+                    const SizedBox(height: 16),
+                    _buildActionButton(context, ref, liveUser),
+                    const SizedBox(height: 16),
+                    _buildContactInfo(liveUser, address),
+                    const SizedBox(height: 16),
+                    if (liveUser.preferences.isNotEmpty) ...[
+                      _buildPreferencesInfo(liveUser),
+                      const SizedBox(height: 16),
+                    ],
+                    _buildRecentOrders(context, userOrders),
                   ],
                 ),
-                const SizedBox(height: 16),
-                _buildActionButton(),
-                const SizedBox(height: 16),
-                _buildContactInfo(user, address),
-                const SizedBox(height: 16),
-                if (user.preferences.isNotEmpty) ...[
-                  _buildPreferencesInfo(user),
-                  const SizedBox(height: 16),
-                ],
-                _buildRecentOrders(userOrders),
-              ],
-            ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text('Lỗi: $e')),
-      ),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, s) => Center(child: Text('Lỗi: $e')),
+          ),
+        );
+      },
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, s) => Scaffold(body: Center(child: Text('Lỗi tải user: $e'))),
     );
   }
 
   Widget _buildProfileCard(UserModel user) {
     final isNewUser = user.createdAt.isAfter(DateTime.now().subtract(const Duration(days: 1)));
     final displayName = user.fullName.isNotEmpty ? user.fullName : user.name;
+    
+    // Join year
+    final joinYear = user.createdAt.year.toString();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -156,6 +174,10 @@ class UserDetailScreen extends ConsumerWidget {
                 Text(
                   user.email,
                   style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                Text(
+                  'Thành viên từ $joinYear',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -219,24 +241,66 @@ class UserDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButton() {
+  Widget _buildActionButton(BuildContext context, WidgetRef ref, UserModel user) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
-          // Implement contact logic
+          _confirmToggleUserStatus(context, ref, user);
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          backgroundColor: user.isActive ? Colors.red.shade50 : Colors.green.shade50,
+          foregroundColor: user.isActive ? Colors.red : Colors.green,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.grey.shade200),
+            side: BorderSide(color: user.isActive ? Colors.red.shade200 : Colors.green.shade200),
           ),
         ),
-        child: const Text('Liên hệ khách', style: TextStyle(fontWeight: FontWeight.bold)),
+        child: Text(
+          user.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản', 
+          style: const TextStyle(fontWeight: FontWeight.bold)
+        ),
+      ),
+    );
+  }
+
+  void _confirmToggleUserStatus(BuildContext context, WidgetRef ref, UserModel user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(user.isActive ? 'Khóa tài khoản?' : 'Mở khóa tài khoản?'),
+        content: Text(user.isActive 
+            ? 'Người dùng sẽ không thể đăng nhập hoặc mua hàng sau khi bị khóa.' 
+            : 'Người dùng sẽ có thể đăng nhập và mua hàng bình thường.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close confirm dialog
+              
+              final userController = ref.read(userControllerProvider.notifier);
+              await userController.toggleUserStatus(user.id, user.isActive);
+
+              if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(user.isActive ? 'Đã khóa tài khoản thành công' : 'Đã mở khóa tài khoản'),
+                      backgroundColor: user.isActive ? Colors.red : Colors.green,
+                    ),
+                  );
+              }
+            },
+            child: Text(
+              user.isActive ? 'Khóa ngay' : 'Mở khóa', 
+              style: TextStyle(color: user.isActive ? Colors.red : Colors.green)
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -255,7 +319,7 @@ class UserDetailScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Thông tin chi tiết', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text('Chỉnh sửa', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+              //Text('Chỉnh sửa', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 16),
@@ -277,7 +341,7 @@ class UserDetailScreen extends ConsumerWidget {
             _buildInfoRow('Thành phố', user.city!),
             const SizedBox(height: 12),
           ],
-          _buildInfoRow('Địa chỉ (Đơn hàng)', address),
+          _buildInfoRow('Địa chỉ', address),
           const SizedBox(height: 12),
           _buildInfoRow('Ngày tạo', DateFormat('dd/MM/yyyy').format(user.createdAt)),
         ],
@@ -287,6 +351,7 @@ class UserDetailScreen extends ConsumerWidget {
 
   Widget _buildPreferencesInfo(UserModel user) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -322,7 +387,7 @@ class UserDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRecentOrders(List<Order> orders) {
+  Widget _buildRecentOrders(BuildContext context, List<Order> orders) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -336,96 +401,106 @@ class UserDetailScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Đơn hàng gần đây', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text('Xem tất cả', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+              //Text('Xem tất cả', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 16),
           if (orders.isEmpty)
             const Center(child: Text('Chưa có đơn hàng nào', style: TextStyle(color: Colors.grey)))
           else
-            ...orders.take(3).map((order) => _buildOrderItem(order)),
+            ...orders.take(3).map((order) => _buildOrderItem(context, order)),
         ],
       ),
     );
   }
 
-  Widget _buildOrderItem(Order order) {
+  Widget _buildOrderItem(BuildContext context, Order order) {
     // Determine status style
     String statusText = order.status;
     Color statusColor = Colors.grey;
+    Color statusBgColor = Colors.white; // Default bg
     
-    switch (order.status.toLowerCase()) {
-      case 'delivered':
-        statusText = 'Đã giao';
-        statusColor = Colors.green;
-        break;
-      case 'processing':
-        statusText = 'Đang xử lý';
-        statusColor = Colors.orange;
-        break;
-      case 'cancelled':
-        statusText = 'Đã hủy';
-        statusColor = Colors.red;
-        break;
-      case 'shipped':
-        statusText = 'Đang giao';
-        statusColor = Colors.blue;
-        break;
+    // Normalize status for check
+    String normalizedStatus = order.status.toLowerCase();
+    
+    if (normalizedStatus.contains('hủy') || normalizedStatus == 'cancelled') {
+       statusText = 'Đã hủy';
+       statusColor = Colors.red;
+       statusBgColor = Colors.red.shade50; // Light red bg for cancelled
+    } else if (normalizedStatus == 'delivered' || normalizedStatus == 'giao hàng thành công') {
+       statusText = 'Đã giao';
+       statusColor = Colors.green;
+    } else if (normalizedStatus == 'processing' || normalizedStatus.contains('chờ')) {
+       statusText = 'Đang xử lý';
+       statusColor = Colors.orange;
+    } else if (normalizedStatus.contains('đang giao') || normalizedStatus == 'shipped') {
+       statusText = 'Đang giao';
+       statusColor = Colors.blue;
     }
 
-    // Summary text (e.g., "Áo thun basic x2 - Hôm nay, 10:12")
+    // Summary text
     final summary = '${order.products.first.productName} x${order.products.first.quantity}${order.products.length > 1 ? '...' : ''} - ${_formatTime(order.createdAt)}';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FA),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderDetailScreen(order: order),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F7FA),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '#${order.id.substring(0, 8).toUpperCase()}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    summary,
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  '#${order.id.substring(0, 8).toUpperCase()}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: statusBgColor,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: statusColor.withOpacity(0.2)),
+                  ),
+                  child: Text(
+                    statusText,
+                    style: TextStyle(fontSize: 10, color: statusColor, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  summary,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  overflow: TextOverflow.ellipsis,
+                  _formatCurrency(order.totalPrice),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(fontSize: 10, color: statusColor),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _formatCurrency(order.totalPrice),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

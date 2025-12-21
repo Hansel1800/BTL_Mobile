@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:do_an_quan_ao/Model/product_model.dart';
 import 'package:do_an_quan_ao/ViewModel/product_provider.dart';
 import 'package:flutter/material.dart';
@@ -7,8 +8,9 @@ import 'dart:convert';
 
 class AddEditProductScreen extends ConsumerStatefulWidget {
   final Product? product;
+  final bool isReadOnly;
 
-  const AddEditProductScreen({super.key, this.product});
+  const AddEditProductScreen({super.key, this.product, this.isReadOnly = false});
 
   @override
   ConsumerState<AddEditProductScreen> createState() =>
@@ -221,7 +223,9 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: Text(
-          widget.product == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm',
+          widget.isReadOnly 
+              ? 'Chi tiết sản phẩm' 
+              : (widget.product == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm'),
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: Colors.white,
@@ -232,10 +236,11 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.more_horiz),
-            onPressed: () {},
-          ),
+          if (!widget.isReadOnly)
+            IconButton(
+              icon: const Icon(Icons.more_horiz),
+              onPressed: () {},
+            ),
         ],
       ),
       body: Column(
@@ -283,7 +288,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               ),
             ),
           ),
-          _buildBottomBar(),
+          if (!widget.isReadOnly) _buildBottomBar(),
         ],
       ),
     );
@@ -299,9 +304,9 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextField('Tên sản phẩm', 'Ví dụ: Áo thun basic cổ tròn', _nameController),
+          _buildTextField('Tên sản phẩm', 'Ví dụ: Áo thun basic cổ tròn', _nameController, readOnly: widget.isReadOnly),
           const SizedBox(height: 16),
-          _buildTextField('SKU', 'Ví dụ: TEE-BASIC-01', _skuController),
+          _buildTextField('SKU', 'Ví dụ: TEE-BASIC-01', _skuController, readOnly: widget.isReadOnly),
           const SizedBox(height: 16),
           // Category Dropdown
           Column(
@@ -310,7 +315,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               const Text('Danh mục', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               const SizedBox(height: 8),
               GestureDetector(
-                onTap: _showCategoryPicker,
+                onTap: widget.isReadOnly ? null : _showCategoryPicker,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   decoration: BoxDecoration(
@@ -327,7 +332,8 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                           fontSize: 14,
                         ),
                       ),
-                      const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                      if (!widget.isReadOnly)
+                        const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
                     ],
                   ),
                 ),
@@ -352,32 +358,34 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                     value: _selectedGender.isEmpty ? null : _selectedGender,
                     hint: const Text('Chọn giới tính'),
                     isExpanded: true,
-                    items: ['Nam', 'Nữ', 'Unisex'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
+                    // Disable dropdown if readOnly
+                    onChanged: widget.isReadOnly ? null : (newValue) {
                       if (newValue != null) {
                         setState(() {
                           _selectedGender = newValue;
                         });
                       }
                     },
+                    items: ['Nam', 'Nữ', 'Unisex'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          _buildTextField('Mô tả', 'Mô tả chất liệu, form dáng, hướng dẫn bảo quản...', _descriptionController, maxLines: 3),
+          _buildTextField('Mô tả', 'Mô tả chất liệu, form dáng, hướng dẫn bảo quản...', _descriptionController, maxLines: 3, readOnly: widget.isReadOnly),
           const SizedBox(height: 16),
-           _buildTextField('Image URL', 'Điền đường dẫn ảnh', _imageUrlController, onChanged: (val) {
-             setState(() {
-               _imageUrl = val.trim();
-             });
-           }),
+          if (!widget.isReadOnly)
+             _buildTextField('Image URL', 'Điền đường dẫn ảnh', _imageUrlController, onChanged: (val) {
+               setState(() {
+                 _imageUrl = val.trim();
+               });
+             }),
            if (_imageUrl != null && _imageUrl!.isNotEmpty)
              Padding(
                padding: const EdgeInsets.only(top: 8.0),
@@ -454,7 +462,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
           Row(
             children: [
               Expanded(
-                child: _buildTextField('Giá bán', '₫ 0', _priceController, isNumber: true, suffix: 'Đã bao gồm thuế'),
+                child: _buildTextField('Giá bán', '₫ 0', _priceController, isNumber: true, suffix: 'Đã bao gồm thuế', readOnly: widget.isReadOnly),
               ),
             ],
           ),
@@ -464,11 +472,11 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
           Row(
             children: [
               Expanded(
-                child: _buildTextField('Tồn kho', 'Số lượng hiện có', _stockController, isNumber: true),
+                child: _buildTextField('Tồn kho', 'Số lượng hiện có', _stockController, isNumber: true, readOnly: widget.isReadOnly),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildTextField('Tồn cảnh báo', 'Đặt tồn cảnh báo', _warningStockController, isNumber: true),
+                child: _buildTextField('Tồn cảnh báo', 'Đặt tồn cảnh báo', _warningStockController, isNumber: true, readOnly: widget.isReadOnly),
               ),
             ],
           ),
@@ -495,12 +503,12 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
           Row(
             children: [
               GestureDetector(
-                onTap: _showSizePicker,
+                onTap: widget.isReadOnly ? null : _showSizePicker,
                 child: _buildChip('Size', true),
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: _showColorPicker,
+                onTap: widget.isReadOnly ? null : _showColorPicker,
                 child: _buildChip('Màu sắc', _selectedColors?.isNotEmpty ?? false),
               ),
             ],
@@ -512,7 +520,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                runSpacing: 8,
                children: _selectedSizes!.map((size) => Chip(
                  label: Text('Size $size'),
-                 onDeleted: () {
+                 onDeleted: widget.isReadOnly ? null : () {
                    setState(() {
                      _selectedSizes!.remove(size);
                    });
@@ -530,7 +538,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                runSpacing: 8,
                children: _selectedColors!.map((color) => Chip(
                  label: Text(color),
-                 onDeleted: () {
+                 onDeleted: widget.isReadOnly ? null : () {
                    setState(() {
                      _selectedColors!.remove(color);
                    });
@@ -624,7 +632,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
 
   Widget _buildVariantItem(String size, String color, String details, ProductVariant? variant) {
     return InkWell(
-      onTap: () {
+      onTap: widget.isReadOnly ? null : () {
         _showEditVariantDialog(size, color, variant);
       },
       child: Row(
@@ -638,7 +646,8 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               Text(details, style: const TextStyle(color: Colors.grey, fontSize: 12)),
             ],
           ),
-          const Icon(Icons.edit, color: Colors.blue, size: 20),
+          if (!widget.isReadOnly)
+            const Icon(Icons.edit, color: Colors.blue, size: 20),
         ],
       ),
     );
@@ -738,33 +747,11 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
   }
 
   Widget _buildImagePreview(String url) {
-    try {
-      if (url.trim().isEmpty) return const SizedBox();
-      final trimmedUrl = url.trim();
-      
-      if (trimmedUrl.toLowerCase().startsWith('http')) {
-        return Image.network(
-          trimmedUrl,
-          errorBuilder: (context, error, stackTrace) => _buildErrorWidget(error),
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return const Center(child: CircularProgressIndicator());
-          },
-          fit: BoxFit.contain,
-        );
-      } else if (trimmedUrl.startsWith('data:image')) {
-        final base64String = trimmedUrl.split(',').last;
-        final bytes = base64Decode(base64String);
-        return Image.memory(
-          bytes,
-          errorBuilder: (context, error, stackTrace) => _buildErrorWidget(error),
-          fit: BoxFit.contain,
-        );
-      }
-    } catch (e) {
-      return _buildErrorWidget(e);
-    }
-    return const SizedBox();
+    if (url.trim().isEmpty) return const SizedBox();
+    return UniversalImage(
+      imageUrl: url.trim(),
+      fit: BoxFit.contain,
+    );
   }
 
   Widget _buildErrorWidget(Object error) {
@@ -786,6 +773,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
     int maxLines = 1,
     String? suffix,
     Function(String)? onChanged,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -802,9 +790,12 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
         TextFormField(
           controller: controller,
           onChanged: onChanged,
+          readOnly: readOnly,
+          enabled: !readOnly,
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           maxLines: maxLines,
           validator: (value) {
+            if (readOnly) return null;
             if (value == null || value.isEmpty) {
               return 'Vui lòng nhập ${label.toLowerCase()}';
             }

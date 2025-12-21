@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Product/user_product_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:do_an_quan_ao/ViewModel/favorite_provider.dart';
 import 'package:do_an_quan_ao/Model/product_model.dart';
 import 'package:intl/intl.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/user_main_screen.dart';
+import 'package:do_an_quan_ao/ViewModel/navigation_provider.dart';
 
 class UserWishlistScreen extends ConsumerWidget {
   const UserWishlistScreen({super.key});
@@ -36,7 +38,7 @@ class UserWishlistScreen extends ConsumerWidget {
                        child: IconButton(
                          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                          onPressed: () {
-                           context.findAncestorStateOfType<UserMainScreenState>()?.navigateToTab(0);
+                           ref.read(navigationProvider.notifier).setIndex(0);
                          },
                        ),
                      ),
@@ -176,11 +178,9 @@ class UserWishlistScreen extends ConsumerWidget {
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                   child: AspectRatio(
                     aspectRatio: 1,
-                    child: CachedNetworkImage(
+                    child: UniversalImage(
                       imageUrl: product.imageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: Colors.grey[200]),
-                      errorWidget: (context, url, error) => const Icon(Icons.error),
                     ),
                   ),
                 ),

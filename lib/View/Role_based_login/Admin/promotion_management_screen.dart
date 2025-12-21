@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:do_an_quan_ao/Model/promotion_model.dart';
 import 'package:do_an_quan_ao/ViewModel/promotion_provider.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/login_screen.dart';
@@ -220,13 +221,11 @@ class _PromotionManagementScreenState extends ConsumerState<PromotionManagementS
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: banner.imageUrl.isNotEmpty
-                ? CachedNetworkImage(
+                ? UniversalImage(
                     imageUrl: banner.imageUrl,
                     width: 80,
                     height: 80,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: Colors.grey.shade200),
-                    errorWidget: (context, url, error) => const Icon(Icons.error),
                   )
                 : Container(
                     width: 80,

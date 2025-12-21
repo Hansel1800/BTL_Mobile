@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:do_an_quan_ao/Model/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:do_an_quan_ao/ViewModel/cart_provider.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Cart/user_cart_screen.dart';
 import 'package:do_an_quan_ao/ViewModel/favorite_provider.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/Chat/user_chat_screen.dart';
 
 class UserProductDetailScreen extends ConsumerStatefulWidget {
   final Product product;
@@ -160,7 +162,7 @@ class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScree
               background: _currentImage.isNotEmpty
                   ? Container(
                       color: Colors.white, // Background for non-filling images
-                      child: CachedNetworkImage(
+                      child: UniversalImage(
                         imageUrl: _currentImage,
                         fit: BoxFit.contain, // Show full image
                       ),
@@ -172,7 +174,11 @@ class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScree
                 backgroundColor: Colors.white,
                 child: Icon(Icons.arrow_back, color: Colors.black),
               ),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
             ),
             actions: [
               Consumer(
@@ -405,6 +411,13 @@ class _UserProductDetailScreenState extends ConsumerState<UserProductDetailScree
             ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => UserChatScreen(product: widget.product)));
+        },
+        backgroundColor: const Color(0xFFD29062), // Orange theme
+        child: const Icon(Icons.chat_bubble, color: Colors.white),
       ),
     );
   }

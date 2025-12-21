@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:do_an_quan_ao/Services/auth_service.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/user_main_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/login_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -15,7 +16,7 @@ class _SignupScreenState extends State<SignupScreen> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController nameController = TextEditingController();
-  String selectedRole = "User";
+  TextEditingController phoneController = TextEditingController(); // Added phone controller
   bool isLoading = false;
   bool isPasswordHidden = true;
 
@@ -32,20 +33,27 @@ class _SignupScreenState extends State<SignupScreen> {
       name: nameController.text,
       email: emailController.text,
       password: passwordController.text,
-      role: selectedRole,
+      phone: phoneController.text, // Pass phone
+      role: "User", // Hardcoded User role
     );
     if (result == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Đăng nhập thành công")));
+      ).showSnackBar(const SnackBar(content: Text("Đăng ký thành công! Vui lòng đăng nhập.")));
+      // Sign out to force user to login manually
+      await _authService.signOut();
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => LoginScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     } else {
+      setState(() {
+        isLoading = false;
+      });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Đăng ký thất bại $result")));
+      ).showSnackBar(SnackBar(content: Text("Đăng ký thất bại: $result")));
     }
   }
 
@@ -66,8 +74,22 @@ class _SignupScreenState extends State<SignupScreen> {
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
-                    labelText: "Name",
-                    hintText: "Hãy nhập tên của bạn",
+                    labelText: "Họ và tên",
+                    hintText: "Nhập họ và tên",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+                // ô số điện thoại
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: "Số điện thoại",
+                    hintText: "Nhập số điện thoại",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -80,7 +102,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   controller: emailController,
                   decoration: InputDecoration(
                     labelText: "Email",
-                    hintText: "Hãy nhập email",
+                    hintText: "Nhập email",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -92,8 +114,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 TextField(
                   controller: passwordController,
                   decoration: InputDecoration(
-                    labelText: "Password",
-                    hintText: "Hãy nhập mật khẩu",
+                    labelText: "Mật khẩu",
+                    hintText: "Nhập mật khẩu",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -111,26 +133,6 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   obscureText: isPasswordHidden, // che mk
-                ),
-                const SizedBox(height: 20),
-
-                // dropdown chon role
-                DropdownButtonFormField(
-                  value: selectedRole,
-                  decoration: InputDecoration(
-                    labelText: "Vai trò",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  items: ["Admin", "User"].map((role) {
-                    return DropdownMenuItem(value: role, child: Text(role));
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      selectedRole = newValue!; // cap nhat su lua chon vai tro
-                    });
-                  },
                 ),
                 const SizedBox(height: 20),
                 // Nut dang ky

@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_payment_methods_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_profile_detail_screen.dart';
@@ -113,11 +113,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                       ),
                       child: ClipOval(
                         child: avatarUrl.isNotEmpty
-                            ? CachedNetworkImage(
+                            ? UniversalImage(
                                 imageUrl: avatarUrl,
                                 fit: BoxFit.cover,
-                                placeholder: (context, url) => const CircularProgressIndicator(),
-                                errorWidget: (context, url, error) => Image.asset('assets/images/default_avatar.png', fit: BoxFit.cover), // Fallback
                               )
                             : const Icon(Icons.person, size: 60, color: Colors.grey),
                       ),
@@ -187,14 +185,14 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         );
                       },
                     ),
-                    _buildDivider(),
-                    _buildMenuItem(
-                      icon: Icons.settings_outlined,
-                      title: 'Cài đặt',
-                      onTap: () {
-                        // Placeholder
-                      },
-                    ),
+                    //_buildDivider(),
+                    // _buildMenuItem(
+                    //   icon: Icons.settings_outlined,
+                    //   title: 'Cài đặt',
+                    //   onTap: () {
+                    //     
+                    //   },
+
                     _buildDivider(),
                     _buildMenuItem(
                       icon: Icons.logout,

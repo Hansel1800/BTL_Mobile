@@ -4,10 +4,9 @@ import 'package:do_an_quan_ao/View/Role_based_login/User/Wishlist/user_wishlist_
 import 'package:do_an_quan_ao/View/Role_based_login/User/Home/user_home_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_profile_screen.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Category/user_category_screen.dart';
-import 'package:do_an_quan_ao/View/Role_based_login/User/login_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:do_an_quan_ao/ViewModel/navigation_provider.dart';
 
 class UserMainScreen extends ConsumerStatefulWidget {
   const UserMainScreen({super.key});
@@ -17,13 +16,6 @@ class UserMainScreen extends ConsumerStatefulWidget {
 }
 
 class UserMainScreenState extends ConsumerState<UserMainScreen> {
-  int _currentIndex = 0;
-
-  void navigateToTab(int index) {
-      setState(() {
-          _currentIndex = index;
-      });
-  }
 
   List<Widget> get _screens => [
     const UserHomeScreen(),
@@ -35,10 +27,13 @@ class UserMainScreenState extends ConsumerState<UserMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final navState = ref.watch(navigationProvider);
+    final currentIndex = navState.currentIndex;
+
     return Scaffold(
       extendBody: true, // Important for notch transparency
       body: IndexedStack(
-        index: _currentIndex,
+        index: currentIndex,
         children: _screens,
       ),
       floatingActionButton: SizedBox(
@@ -47,14 +42,12 @@ class UserMainScreenState extends ConsumerState<UserMainScreen> {
         child: FloatingActionButton(
           heroTag: 'cartable', // Avoid hero tag conflict
           onPressed: () {
-            setState(() {
-              _currentIndex = 2;
-            });
+            ref.read(navigationProvider.notifier).setIndex(2);
           },
-          backgroundColor: _currentIndex == 2 ? const Color(0xFFA07048) : const Color(0xFFD29062), // Darken if selected
+          backgroundColor: currentIndex == 2 ? const Color(0xFFA07048) : const Color(0xFFD29062), // Darken if selected
           elevation: 4,
           shape: const CircleBorder(),
-          child: Icon(Icons.shopping_bag_outlined, size: 30, color: Colors.white),
+          child: const Icon(Icons.shopping_bag_outlined, size: 30, color: Colors.white),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -72,13 +65,13 @@ class UserMainScreenState extends ConsumerState<UserMainScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildNavItem(Icons.home_outlined, Icons.home, 'Trang chủ', 0),
-              _buildNavItem(Icons.grid_view_outlined, Icons.grid_view, 'Danh mục', 1),
+              _buildNavItem(Icons.home_outlined, Icons.home, 'Trang chủ', 0, currentIndex),
+              _buildNavItem(Icons.grid_view_outlined, Icons.grid_view, 'Danh mục', 1, currentIndex),
               
               const SizedBox(width: 48), // Spacer for FAB
 
-              _buildNavItem(Icons.favorite_border, Icons.favorite, 'Yêu thích', 3),
-              _buildNavItem(Icons.person_outline, Icons.person, 'Hồ sơ', 4),
+              _buildNavItem(Icons.favorite_border, Icons.favorite, 'Yêu thích', 3, currentIndex),
+              _buildNavItem(Icons.person_outline, Icons.person, 'Hồ sơ', 4, currentIndex),
             ],
           ),
         ),
@@ -86,11 +79,11 @@ class UserMainScreenState extends ConsumerState<UserMainScreen> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, IconData activeIcon, String label, int index) {
-    final isSelected = _currentIndex == index;
+  Widget _buildNavItem(IconData icon, IconData activeIcon, String label, int index, int currentIndex) {
+    final isSelected = currentIndex == index;
     return Expanded(
       child: InkWell(
-        onTap: () => setState(() => _currentIndex = index),
+        onTap: () => ref.read(navigationProvider.notifier).setIndex(index),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,

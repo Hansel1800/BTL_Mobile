@@ -80,25 +80,28 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: ordersAsyncValue.when(
-        data: (orders) {
+        data: (allOrders) {
           return usersAsyncValue.when(
             data: (users) {
-              // Calculate statistics
+              // 1. Filter out Cancelled orders for all stats
+              final activeOrders = allOrders.where((o) => o.status != 'Đã hủy').toList();
+
+              // Calculate statistics based on ACTIVE orders
               final now = DateTime.now();
-              final todayOrders = orders.where((order) {
+              final todayOrders = activeOrders.where((order) {
                 return order.createdAt.year == now.year &&
                     order.createdAt.month == now.month &&
                     order.createdAt.day == now.day;
               }).toList();
 
               final yesterday = DateTime(now.year, now.month, now.day - 1);
-              final yesterdayOrders = orders.where((order) {
+              final yesterdayOrders = activeOrders.where((order) {
                 return order.createdAt.year == yesterday.year &&
                     order.createdAt.month == yesterday.month &&
                     order.createdAt.day == yesterday.day;
               }).toList();
 
-              final totalRevenue = orders.fold<double>(0, (sum, order) => sum + order.totalPrice);
+              final totalRevenue = activeOrders.fold<double>(0, (sum, order) => sum + order.totalPrice);
               final todayRevenue = todayOrders.fold<double>(0, (sum, order) => sum + order.totalPrice);
               final yesterdayRevenue = yesterdayOrders.fold<double>(0, (sum, order) => sum + order.totalPrice);
 
@@ -134,14 +137,14 @@ class DashboardScreen extends ConsumerWidget {
                 orElse: () => 0,
               );
 
-              // Find Top Product
+              // Find Top Product (from Active Orders only)
               String topProductName = 'Chưa có dữ liệu';
               String topProductSales = '0 đơn';
               Product? topProduct;
 
-              if (orders.isNotEmpty) {
+              if (activeOrders.isNotEmpty) {
                 Map<String, int> productSales = {};
-                for (var order in orders) {
+                for (var order in activeOrders) {
                   for (var item in order.products) {
                     productSales[item.productId] = (productSales[item.productId] ?? 0) + item.quantity;
                   }
@@ -197,7 +200,7 @@ class DashboardScreen extends ConsumerWidget {
                         _buildStatCard(
                           context, 
                           'Đơn hàng', 
-                          '${orders.length}', 
+                          '${activeOrders.length}', 
                           '+${todayOrders.length} mới', 
                           Colors.green
                         ),
@@ -229,7 +232,10 @@ class DashboardScreen extends ConsumerWidget {
                       ref, 
                       'Đơn hàng', 
                       'Lọc theo trạng thái, cập nhật Processing, Shipping...', 
-                      '${orders.where((o) => o.status.toLowerCase() == 'processing' || o.status.toLowerCase() == 'pending').length} Processing', 
+                      '${activeOrders.where((o) {
+                        final s = o.status.toLowerCase();
+                        return s != 'giao hàng thành công' && s != 'delivered';
+                      }).length} Processing', 
                       Colors.blue[50]!, 
                       Colors.blue
                     ),

@@ -79,7 +79,10 @@ class OrderManagementScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: ordersAsyncValue.when(
-              data: (orders) {
+              data: (allOrders) {
+                // Filter out Cancelled orders
+                final orders = allOrders.where((o) => o.status != 'Đã hủy').toList();
+
                 final todayOrders = orders.where((order) {
                   final now = DateTime.now();
                   return order.createdAt.year == now.year &&
@@ -146,7 +149,10 @@ class OrderManagementScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Expanded(
             child: ordersAsyncValue.when(
-              data: (orders) => _buildOrderList(context, orders),
+              data: (orders) {
+                final filtered = orders.where((o) => o.status != 'Đã hủy').toList();
+                return _buildOrderList(context, filtered);
+              },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(
                 child: Text('Lỗi: $error'),

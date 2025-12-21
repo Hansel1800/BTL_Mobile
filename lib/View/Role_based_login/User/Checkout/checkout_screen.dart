@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:do_an_quan_ao/Model/user_model.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Profile/user_profile_screen.dart';
 import 'package:do_an_quan_ao/Services/order_repository.dart';
@@ -74,6 +75,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             }
         }
     }
+
+    // Auto-switch to Saver if address missing
+    if (mounted && (_user?.address.isEmpty ?? true) && _shippingMethod == 'standard') {
+        setState(() {
+            _shippingMethod = 'saver';
+        });
+    }
   }
 
   String _formatCurrency(double amount) {
@@ -85,7 +93,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget build(BuildContext context) {
     final cartItems = ref.watch(cartProvider);
     final subtotal = cartItems.fold(0.0, (sum, item) => sum + (item.product.price * item.quantity));
-    final shippingFee = _shippingMethod == 'standard' ? 25000.0 : 0.0;
+    final shippingFee = _shippingMethod == 'standard' ? _calculateShippingFeeVal(_user?.city ?? '') : 0.0;
     
     // double discount = 0.0; // Removed per user request
     
@@ -108,7 +116,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           decoration: const BoxDecoration(color: Color(0xFFEBE4DB), shape: BoxShape.circle),
           child: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+            },
           ),
         ),
       ),
@@ -197,12 +209,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   void _processOrder() async {
     if (_user == null) return;
     
-    if (_user!.address.isEmpty || _user!.phoneNumber.isEmpty) {
+    // User Requirement: Must enter address if "Giao nhanh" (standard) is selected
+    if (_shippingMethod == 'standard' && (_user!.address.isEmpty || _user!.address.trim().isEmpty)) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Thông tin còn thiếu'),
-          content: const Text('Vui lòng cập nhật số điện thoại và địa chỉ giao hàng trước khi đặt hàng.'),
+          title: const Text('Thiếu địa chỉ giao hàng'),
+          content: const Text('Bạn đã chọn Giao nhanh. Vui lòng cập nhật địa chỉ để tiếp tục.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -211,7 +224,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfileDetailScreen())).then((_) => _loadUserData());
+                 Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfileDetailScreen())).then((_) => _loadUserData());
               },
               child: const Text('Cập nhật ngay'),
             ),
@@ -221,10 +234,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return;
     }
 
+    // General validation (Phone is always needed)
+    if (_user!.phoneNumber.isEmpty) {
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng cập nhật số điện thoại')));
+       return;
+    }
+
     // Recalculate totals
     final cartItems = ref.read(cartProvider);
     final subtotal = cartItems.fold(0.0, (sum, item) => sum + (item.product.price * item.quantity));
-    final shippingFee = _shippingMethod == 'standard' ? 25000.0 : 0.0;
+    final shippingFee = _shippingMethod == 'standard' ? _calculateShippingFeeVal(_user?.city ?? '') : 0.0;
     
     double discount = 0.0;
     if (_appliedVoucher != null) {
@@ -310,7 +329,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Địa chỉ giao hàng', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Thông tin giao hàng', style: TextStyle(fontWeight: FontWeight.bold)),
               GestureDetector(
                 onTap: () {
                    Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfileDetailScreen())).then((_) => _loadUserData());
@@ -321,9 +340,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           const SizedBox(height: 12),
           if (_user != null) ...[
-             Text('${(_user!.fullName.isNotEmpty ? _user!.fullName : _user!.name).trim()} · ${(_user!.phoneNumber.isNotEmpty ? _user!.phoneNumber : "Chưa có SĐT").trim()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+             Text('${(_user!.fullName.isNotEmpty ? _user!.fullName : _user!.name).trim()} · ${(_user!.phoneNumber.isNotEmpty ? _user!.phoneNumber : "Chưa có SĐT").trim()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)),
              const SizedBox(height: 4),
-             Text(_user!.address.isNotEmpty ? _user!.address.trim() : 'Chưa có địa chỉ giao hàng', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+             Text("Địa chỉ: "+(_user!.address.isNotEmpty ? _user!.address.trim() : 'Chưa có địa chỉ giao hàng'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           ] else 
              const Center(child: CircularProgressIndicator()),
           
@@ -356,6 +375,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildDeliveryMethodSection() {
+    final hasAddress = _user != null && _user!.address.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
@@ -364,7 +385,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         children: [
           const Text('Phương thức giao hàng', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          _buildRadioItem('Giao nhanh', 'Dự kiến: hôm nay - ngày mai', '25.000đ', 'standard'),
+          _buildRadioItem(
+            'Giao nhanh', 
+            hasAddress ? 'Dự kiến: hôm nay - ngày mai' : 'Cần cập nhật địa chỉ', 
+            hasAddress ? _formatCurrency(_calculateShippingFeeVal(_user?.city ?? '')) : '--', 
+            'standard',
+            enabled: hasAddress,
+          ),
           const Divider(),
           _buildRadioItem('Tiết kiệm', '3 - 5 ngày làm việc', 'Miễn phí', 'saver'),
         ],
@@ -372,26 +399,29 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  Widget _buildRadioItem(String title, String subtitle, String price, String value) {
+  Widget _buildRadioItem(String title, String subtitle, String price, String value, {bool enabled = true}) {
     final isSelected = _shippingMethod == value;
     return InkWell(
-      onTap: () => setState(() => _shippingMethod = value),
+      onTap: enabled ? () => setState(() => _shippingMethod = value) : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked, color: const Color(0xFFC69C6D)),
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked, 
+              color: enabled ? const Color(0xFFC69C6D) : Colors.grey[300]
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-                  Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.w500, color: enabled ? Colors.black : Colors.grey)),
+                  Text(subtitle, style: TextStyle(color: enabled ? Colors.grey : Colors.grey[400], fontSize: 10)),
                 ],
               ),
             ),
-            Text(price, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(price, style: TextStyle(fontWeight: FontWeight.bold, color: enabled ? Colors.black : Colors.grey)),
           ],
         ),
       ),
@@ -601,10 +631,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: CachedNetworkImage(
+                  child: UniversalImage(
                     imageUrl: item.image,
                     width: 60, height: 60, fit: BoxFit.cover,
-                    placeholder: (_,__) => const Center(child: CircularProgressIndicator()),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -678,5 +707,33 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       width: 40, height: 2,
       color: const Color(0xFFEBE4DB),
     );
+  }
+
+  String _getRegion(String city) {
+    // List of cities in North
+    const northCities = [
+      'Hà Nội', 'Hải Phòng', 'Lai Châu', 'Lạng Sơn', 'Lào Cai', 'Nam Định', 
+      'Ninh Bình', 'Phú Thọ', 'Quảng Ninh', 'Sơn La', 'Thái Bình', 
+      'Thái Nguyên', 'Tuyên Quang', 'Vĩnh Phúc', 'Yên Bái'
+    ];
+    
+    // List of cities in Central
+    const centralCities = [
+      'Đà Nẵng', 'Lâm Đồng', 'Nghệ An', 'Ninh Thuận', 'Phú Yên', 
+      'Quảng Bình', 'Quảng Nam', 'Quảng Ngãi', 'Quảng Trị', 
+      'Thanh Hóa', 'Thừa Thiên Huế'
+    ];
+
+    if (northCities.contains(city)) return 'Miền Bắc';
+    if (centralCities.contains(city)) return 'Miền Trung';
+    return 'Miền Nam'; 
+  }
+
+  double _calculateShippingFeeVal(String city) {
+     if (city.isEmpty) return 25000.0; // Fallback default
+     final region = _getRegion(city);
+     if (region == 'Miền Bắc') return 50000.0;
+     if (region == 'Miền Trung') return 70000.0;
+     return 100000.0; // Miền Nam
   }
 }

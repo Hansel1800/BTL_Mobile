@@ -1,6 +1,7 @@
-import 'package:do_an_quan_ao/View/Role_based_login/User/Category/user_category_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/User/Category/user_category_detail_screen.dart';
+import 'package:do_an_quan_ao/ViewModel/navigation_provider.dart';
 
 class UserCategoryScreen extends ConsumerStatefulWidget {
   const UserCategoryScreen({super.key});
@@ -9,13 +10,14 @@ class UserCategoryScreen extends ConsumerStatefulWidget {
   ConsumerState<UserCategoryScreen> createState() => _UserCategoryScreenState();
 }
 
-
-
 class _UserCategoryScreenState extends ConsumerState<UserCategoryScreen> {
   String _selectedGender = 'Nam';
 
   @override
   Widget build(BuildContext context) {
+    final navState = ref.watch(navigationProvider);
+    final showBack = navState.showBackInCategory;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: SafeArea(
@@ -28,17 +30,31 @@ class _UserCategoryScreenState extends ConsumerState<UserCategoryScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
                     children: [
-                      const Text(
-                        'Danh mục',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tối giản nhưng đầy đủ lựa chọn',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      if (showBack)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: InkWell(
+                            onTap: () {
+                              ref.read(navigationProvider.notifier).goHomeFromCategory();
+                            },
+                            child: const Icon(Icons.arrow_back, color: Colors.black),
+                          ),
+                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Danh mục',
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tối giản nhưng đầy đủ lựa chọn',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -99,7 +115,8 @@ class _UserCategoryScreenState extends ConsumerState<UserCategoryScreen> {
               // Category List
               _buildCategoryItem(Icons.checkroom, 'Áo', 'Áo thun, sơ mi, polo, sweater', '90+ sp'),
               _buildCategoryItem(Icons.pause_presentation, 'Quần', 'Quần tây, jeans, ống rộng, short', '80+ sp'),
-              _buildCategoryItem(Icons.grid_view, 'Váy & đầm', 'Váy chữ A, midi, maxi, đầm suông', '60+ sp'),
+              if (_selectedGender == 'Nữ')
+                _buildCategoryItem(Icons.grid_view, 'Váy & đầm', 'Váy chữ A, midi, maxi, đầm suông', '60+ sp'),
               _buildCategoryItem(Icons.layers, 'Áo khoác', 'Jacket, blazer, trench, hoodie', '40+ sp'),
               _buildCategoryItem(Icons.auto_awesome, 'Set đồ', 'Bộ phối sẵn theo phong cách', '30+ sp'),
               _buildCategoryItem(Icons.watch, 'Phụ kiện', 'Túi, thắt lưng, mũ, khăn, trang sức', '70+ sp'),
