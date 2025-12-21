@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:do_an_quan_ao/Services/order_repository.dart';
 import 'package:do_an_quan_ao/View/Widgets/success_dialog.dart';
 import 'package:do_an_quan_ao/Services/notification_service.dart';
+import 'package:do_an_quan_ao/Services/chat_service.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/Admin/admin_chat_detail_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final Order order;
@@ -15,6 +17,8 @@ class OrderDetailScreen extends StatefulWidget {
 }
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  bool _isChatLoading = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -149,19 +153,60 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
             )
           else
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                   _showStatusUpdateDialog(context);
-                },
-                icon: const Icon(Icons.edit, size: 16),
-                label: const Text('Cập nhật trạng thái'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                       // 1. Send Message in Background
+                       final chatService = ChatService();
+                       final orderIdShort = widget.order.id.length > 8 ? widget.order.id.substring(0, 8).toUpperCase() : widget.order.id;
+                       
+                       chatService.sendAdminMessage(
+                         widget.order.userId, 
+                         'Thông tin về đơn hàng #$orderIdShort',
+                         orderId: widget.order.id,
+                         orderStatus: widget.order.status,
+                         orderTotal: widget.order.totalPrice.toStringAsFixed(0),
+                         productImage: widget.order.products.isNotEmpty ? widget.order.products.first.imageUrl : null,
+                       ).ignore(); // Ignore result, just send
+
+                       // 2. Navigate Immediately
+                       Navigator.push(
+                           context, 
+                           MaterialPageRoute(
+                             builder: (_) => AdminChatDetailScreen(
+                               userId: widget.order.userId, 
+                               userName: widget.order.customerName
+                             )
+                           )
+                       );
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                    label: const Text('Chat'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue, 
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showStatusUpdateDialog(context),
+                    icon: const Icon(Icons.edit, size: 16),
+                    label: const Text('Cập nhật'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
             ),
         ],
       ),

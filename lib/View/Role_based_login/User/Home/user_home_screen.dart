@@ -116,8 +116,14 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
               unreadCount = snapshot.data!.where((m) => m.isAdmin && !m.isRead).length;
           }
           return FloatingActionButton(
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const UserChatScreen()));
+            onPressed: () async {
+              final uid = FirebaseAuth.instance.currentUser?.uid;
+              if (uid != null) {
+                 await ChatService().markAsRead(uid, isAdminReading: false);
+              }
+              if (context.mounted) {
+                 Navigator.push(context, MaterialPageRoute(builder: (_) => const UserChatScreen()));
+              }
             },
             backgroundColor: const Color(0xFFD29062), // Orange theme
             child: Stack(
@@ -196,8 +202,14 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
                                       children: [
                                           IconButton(
                                               icon: const Icon(Icons.chat_bubble_outline, color: Colors.black, size: 26),
-                                              onPressed: () {
-                                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const UserChatScreen()));
+                                              onPressed: () async {
+                                                  final uid = FirebaseAuth.instance.currentUser?.uid;
+                                                  if (uid != null) {
+                                                     await ChatService().markAsRead(uid, isAdminReading: false);
+                                                  }
+                                                  if (context.mounted) {
+                                                      Navigator.push(context, MaterialPageRoute(builder: (_) => const UserChatScreen()));
+                                                  }
                                               },
                                           ),
                                           if (unreadCount > 0)

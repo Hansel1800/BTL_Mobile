@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/Admin/order_detail_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:do_an_quan_ao/View/Role_based_login/Admin/admin_chat_detail_screen.dart';
+import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 
 class UserDetailScreen extends ConsumerWidget {
   final UserModel user;
@@ -242,27 +244,56 @@ class UserDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildActionButton(BuildContext context, WidgetRef ref, UserModel user) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () {
-          _confirmToggleUserStatus(context, ref, user);
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: user.isActive ? Colors.red.shade50 : Colors.green.shade50,
-          foregroundColor: user.isActive ? Colors.red : Colors.green,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: user.isActive ? Colors.red.shade200 : Colors.green.shade200),
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AdminChatDetailScreen(
+                    userId: user.id,
+                    userName: user.fullName.isNotEmpty ? user.fullName : user.name,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.chat_bubble_outline, size: 20),
+            label: const Text('Nhắn tin'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue.shade50,
+              foregroundColor: Colors.blue,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
           ),
         ),
-        child: Text(
-          user.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản', 
-          style: const TextStyle(fontWeight: FontWeight.bold)
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              _confirmToggleUserStatus(context, ref, user);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: user.isActive ? Colors.red.shade50 : Colors.green.shade50,
+              foregroundColor: user.isActive ? Colors.red : Colors.green,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: user.isActive ? Colors.red.shade200 : Colors.green.shade200),
+              ),
+            ),
+            child: Text(
+              user.isActive ? 'Khóa' : 'Mở khóa', 
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -426,7 +457,7 @@ class UserDetailScreen extends ConsumerWidget {
     if (normalizedStatus.contains('hủy') || normalizedStatus == 'cancelled') {
        statusText = 'Đã hủy';
        statusColor = Colors.red;
-       statusBgColor = Colors.red.shade50; // Light red bg for cancelled
+       statusBgColor = Colors.red.shade50;
     } else if (normalizedStatus == 'delivered' || normalizedStatus == 'giao hàng thành công') {
        statusText = 'Đã giao';
        statusColor = Colors.green;
@@ -439,7 +470,8 @@ class UserDetailScreen extends ConsumerWidget {
     }
 
     // Summary text
-    final summary = '${order.products.first.productName} x${order.products.first.quantity}${order.products.length > 1 ? '...' : ''} - ${_formatTime(order.createdAt)}';
+    final summary = '${order.products.first.productName} x${order.products.first.quantity}';
+    final hasMore = order.products.length > 1;
 
     return GestureDetector(
       onTap: () {
@@ -458,8 +490,18 @@ class UserDetailScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // Product Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: UniversalImage(
+                imageUrl: order.products.first.imageUrl,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,9 +512,14 @@ class UserDetailScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    summary,
+                    '$summary${hasMore ? '...' : ''}',
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  Text(
+                    _formatTime(order.createdAt),
+                    style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
                   ),
                 ],
               ),

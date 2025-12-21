@@ -155,6 +155,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (message.orderId != null)
+                             _buildOrderAttachment(message),
                           if (imageUrl != null)
                              Padding(
                                padding: const EdgeInsets.only(bottom: 8.0),
@@ -233,5 +235,53 @@ class _UserChatScreenState extends State<UserChatScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildOrderAttachment(ChatMessage message) {
+      return Container(
+          width: 200,
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+              children: [
+                  ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: UniversalImage(
+                          imageUrl: message.productImage ?? '',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                      )
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                              Text(
+                                  '#${message.orderId!.length > 8 ? message.orderId!.substring(0,8).toUpperCase() : message.orderId}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                  message.orderStatus ?? '',
+                                  style: const TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                  '₫${message.orderTotal}',
+                                  style: const TextStyle(color: Colors.black87, fontSize: 11)
+                              ),
+                          ]
+                      )
+                  )
+              ]
+          )
+      );
   }
 }

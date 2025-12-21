@@ -56,7 +56,12 @@ class ChatService {
   // --- ADMIN METHODS ---
 
   // Admin sends a message
-  Future<void> sendAdminMessage(String userId, String text) async {
+  Future<void> sendAdminMessage(String userId, String text, {
+    String? orderId,
+    String? orderStatus,
+    String? orderTotal,
+    String? productImage,
+  }) async {
     final docRef = _firestore.collection('chats').doc(userId);
     
     await docRef.collection('messages').add({
@@ -65,6 +70,10 @@ class ChatService {
       'timestamp': FieldValue.serverTimestamp(),
       'isAdmin': true,
       'isRead': false,
+      if (orderId != null) 'orderId': orderId,
+      if (orderStatus != null) 'orderStatus': orderStatus,
+      if (orderTotal != null) 'orderTotal': orderTotal,
+      if (productImage != null) 'productImage': productImage,
     });
 
     await docRef.update({
@@ -78,12 +87,26 @@ class ChatService {
   // Mark messages as read
   Future<void> markAsRead(String userId, {required bool isAdminReading}) async {
     final docRef = _firestore.collection('chats').doc(userId);
+    final batch = _firestore.batch();
     
+    // 1. Update Session Status
     if (isAdminReading) {
-      await docRef.update({'isReadByAdmin': true});
+      batch.update(docRef, {'isReadByAdmin': true});
     } else {
-      await docRef.update({'isReadByUser': true});
+      batch.update(docRef, {'isReadByUser': true});
     }
+
+    // 2. Update Unread Messages
+    final messagesQuery = docRef.collection('messages')
+        .where('isAdmin', isEqualTo: !isAdminReading) 
+        .where('isRead', isEqualTo: false);
+
+    final unreadDocs = await messagesQuery.get();
+    for (var doc in unreadDocs.docs) {
+        batch.update(doc.reference, {'isRead': true});
+    }
+
+    await batch.commit();
   }
 
   // --- STREAMS ---

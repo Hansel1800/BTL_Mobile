@@ -7,6 +7,11 @@ class ChatMessage {
   final DateTime timestamp;
   final bool isAdmin;
   final bool isRead;
+  // Order attachment fields
+  final String? orderId;
+  final String? orderStatus;
+  final String? orderTotal; // Store as formatted string or double? String is easier for display here
+  final String? productImage;
 
   ChatMessage({
     required this.id,
@@ -15,6 +20,10 @@ class ChatMessage {
     required this.timestamp,
     required this.isAdmin,
     this.isRead = false,
+    this.orderId,
+    this.orderStatus,
+    this.orderTotal,
+    this.productImage,
   });
 
   Map<String, dynamic> toJson() {
@@ -24,6 +33,10 @@ class ChatMessage {
       'timestamp': Timestamp.fromDate(timestamp),
       'isAdmin': isAdmin,
       'isRead': isRead,
+      if (orderId != null) 'orderId': orderId,
+      if (orderStatus != null) 'orderStatus': orderStatus,
+      if (orderTotal != null) 'orderTotal': orderTotal,
+      if (productImage != null) 'productImage': productImage,
     };
   }
 
@@ -36,6 +49,10 @@ class ChatMessage {
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isAdmin: data['isAdmin'] ?? false,
       isRead: data['isRead'] ?? false,
+      orderId: data['orderId'],
+      orderStatus: data['orderStatus'],
+      orderTotal: data['orderTotal'],
+      productImage: data['productImage'],
     );
   }
 }
