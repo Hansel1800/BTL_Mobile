@@ -41,8 +41,20 @@ class CartItem {
        } catch (e) {
          // Fallback
        }
-    }
+     }
     return product.imageUrl;
+  }
+
+  int get stock {
+    if (selectedSize != null && selectedColor != null) {
+      try {
+        final variant = product.variants.firstWhere(
+            (v) => v.size == selectedSize && v.color == selectedColor
+        );
+        return variant.stock;
+      } catch (_) {}
+    }
+    return product.stock;
   }
 }
 
@@ -52,9 +64,23 @@ class CartNotifier extends Notifier<List<CartItem>> {
     return [];
   }
 
+  int _getStock(Product product, String? size, String? color) {
+    if (size != null && color != null) {
+      try {
+        final variant = product.variants.firstWhere(
+            (v) => v.size == size && v.color == color
+        );
+        return variant.stock;
+      } catch (_) {}
+    }
+    return product.stock;
+  }
+
   void addToCart(Product product, String? size, String? color, int quantity) {
     if (size == null && product.sizes.isNotEmpty) return;
     if (color == null && product.colors.isNotEmpty) return;
+
+    final availableStock = _getStock(product, size, color);
 
     final existingIndex = state.indexWhere((item) => 
       item.product.id == product.id && 
@@ -64,9 +90,15 @@ class CartNotifier extends Notifier<List<CartItem>> {
 
     if (existingIndex != -1) {
       final items = [...state];
+      final currentQty = items[existingIndex].quantity;
+      if (currentQty + quantity > availableStock) {
+        // Can't add more than stock
+        return; 
+      }
       items[existingIndex].quantity += quantity;
       state = items;
     } else {
+      if (quantity > availableStock) return; // Can't add if initially requesting more than stock
       state = [
         ...state,
         CartItem(product: product, selectedSize: size, selectedColor: color, quantity: quantity)
@@ -83,7 +115,15 @@ class CartNotifier extends Notifier<List<CartItem>> {
     if (index == -1) return;
 
     final items = [...state];
-    final newQuantity = items[index].quantity + change;
+    final currentQty = items[index].quantity;
+    final newQuantity = currentQty + change;
+    
+    final availableStock = _getStock(item.product, item.selectedSize, item.selectedColor);
+
+    if (newQuantity > availableStock) {
+        // Did not update because stock limit reached
+        return; 
+    }
 
     if (newQuantity > 0) {
       items[index].quantity = newQuantity;

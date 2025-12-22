@@ -319,7 +319,13 @@ class _UserCartScreenState extends ConsumerState<UserCartScreen> {
                                            ),
                                            Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                            InkWell(
-                                             onTap: () => notifier.updateQuantity(item, 1),
+                                             onTap: () {
+                                                if (item.quantity >= item.stock) {
+                                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chỉ còn ${item.stock} sản phẩm trong kho')));
+                                                } else {
+                                                   notifier.updateQuantity(item, 1);
+                                                }
+                                             },
                                              child: const Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), child: Icon(Icons.add, size: 16)),
                                            ),
                                          ],

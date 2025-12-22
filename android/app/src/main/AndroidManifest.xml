@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <application
-        android:label="do_an_food_moi"
+        android:label="Mãnh Hổ"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

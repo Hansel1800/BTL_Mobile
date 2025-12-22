@@ -11,13 +11,28 @@ import 'package:do_an_quan_ao/View/Role_based_login/Admin/admin_home_screen.dart
 import 'firebase_options.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // Kiểm tra kết nối Firestore trước khi chạy app
-  final authService = AuthService();
-  final checkResult = await authService.checkFirestoreConnection();
-  debugPrint('Firestore check: $checkResult');
-  runApp(const ProviderScope(child: MyApp()));
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    
+    try {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      
+      // Kiểm tra kết nối Firestore trước khi chạy app (Optional logging)
+      final authService = AuthService();
+      final checkResult = await authService.checkFirestoreConnection();
+      debugPrint('Firestore check: $checkResult');
+      
+    } catch (e, stack) {
+      debugPrint('CRITICAL INITIALIZATION ERROR: $e');
+      debugPrint('$stack');
+      // Consider showing a fallback error UI if Firebase fails entirely
+    }
+
+    runApp(const ProviderScope(child: MyApp()));
+  }, (error, stack) {
+    debugPrint('UNCAUGHT ERROR DIED: $error');
+    debugPrint('$stack');
+  });
 }
 
 class MyApp extends StatelessWidget {
