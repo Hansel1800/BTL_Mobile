@@ -32,7 +32,7 @@ class UserHomeScreen extends ConsumerStatefulWidget {
 
 class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
   int _selectedCategoryIndex = 0;
-  final List<String> _categories = ['Tất cả', 'Nam', 'Nữ', 'Phụ kiện'];
+  //final List<String> _categories = ['Tất cả', 'Nam', 'Nữ', 'Phụ kiện'];
 
   @override
   void initState() {
@@ -299,7 +299,7 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
                             builder: (context) => const UserCategoryDetailScreen(
                               categoryName: 'Tìm kiếm',
                               categorySubtitle: 'Tìm kiếm sản phẩm',
-                              gender: 'Unisex',
+                              gender: 'Tất cả',
                               autoFocusSearch: true,
                             ),
                           ),
@@ -327,43 +327,43 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
               ),
             ),
 
-            // Categories
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 40,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final isSelected = _selectedCategoryIndex == index;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedCategoryIndex = index;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 12),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFD29062) : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          _categories[index],
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
+            // // Categories
+            // SliverToBoxAdapter(
+            //   child: SizedBox(
+            //     height: 40,
+            //     child: ListView.builder(
+            //       scrollDirection: Axis.horizontal,
+            //       padding: const EdgeInsets.symmetric(horizontal: 16),
+            //       itemCount: _categories.length,
+            //       itemBuilder: (context, index) {
+            //         final isSelected = _selectedCategoryIndex == index;
+            //         return GestureDetector(
+            //           onTap: () {
+            //             setState(() {
+            //               _selectedCategoryIndex = index;
+            //             });
+            //           },
+            //           child: Container(
+            //             margin: const EdgeInsets.only(right: 12),
+            //             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            //             decoration: BoxDecoration(
+            //               color: isSelected ? const Color(0xFFD29062) : Colors.grey[200],
+            //               borderRadius: BorderRadius.circular(20),
+            //             ),
+            //             child: Text(
+            //               _categories[index],
+            //               style: TextStyle(
+            //                 color: isSelected ? Colors.white : Colors.black,
+            //                 fontWeight: FontWeight.bold,
+            //                 fontSize: 14,
+            //               ),
+            //             ),
+            //           ),
+            //         );
+            //       },
+            //     ),
+            //   ),
+            // ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 

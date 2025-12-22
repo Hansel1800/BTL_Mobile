@@ -241,14 +241,45 @@ class _CardDetailScreenState extends State<CardDetailScreen> with SingleTickerPr
            // we will delete old and add new. This is a hack but works for this level.
            // Ideally: repo.updatePaymentMethod(uid, newMethod)
            
+           // Validation
+           if (_numberController.text.replaceAll(' ', '').length != 16) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Số thẻ không hợp lệ')));
+              return;
+           }
+           if (_holderController.text.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập tên chủ thẻ')));
+              return;
+           }
+            // Expiry Check
+           if (_expiryController.text.length == 5) {
+              final parts = _expiryController.text.split('/');
+              if (parts.length == 2) {
+                final month = int.tryParse(parts[0]) ?? 0;
+                final year = int.tryParse(parts[1]) ?? 0;
+                 if (month < 1 || month > 12) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tháng không hợp lệ')));
+                    return;
+                 }
+                 final now = DateTime.now();
+                 final expiryDate = DateTime(2000 + year, month);
+                 if (expiryDate.isBefore(DateTime(now.year, now.month + 1))) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thẻ hết hạn hoặc sắp hết hạn')));
+                    return;
+                 }
+              }
+           } else {
+               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ngày hết hạn sai định dạng')));
+               return;
+           }
+
            final newMethod = PaymentMethod(
              id: widget.paymentMethod.id, 
              type: widget.paymentMethod.type,
-             title: 'Visa ending ${_numberController.text.length >= 4 ? _numberController.text.substring(_numberController.text.length - 4) : '????'}',
+             title: 'Visa ending ${_numberController.text.replaceAll(' ', '').length >= 4 ? _numberController.text.replaceAll(' ', '').substring(_numberController.text.replaceAll(' ', '').length - 4) : '????'}',
              subtitle: _holderController.text.toUpperCase(),
              details: {
-               'cardNumber': _numberController.text,
-               'holder': _holderController.text, // Store as typed, display upper
+               'cardNumber': _numberController.text, // Store with spaces as formatted
+               'holder': _holderController.text, 
                'expiry': _expiryController.text,
                'cvv': _cvvController.text,
              },
@@ -333,7 +364,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> with SingleTickerPr
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    _isEditing ? _numberController.text : cardNumber,
+                    _numberController.text.isEmpty ? cardNumber : _numberController.text,
                     style: const TextStyle(color: Colors.white, fontSize: 20, fontFamily: 'Courier', letterSpacing: 2, shadows: [Shadow(blurRadius: 2, color: Colors.black)]),
                   ),
                 ),
@@ -346,7 +377,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> with SingleTickerPr
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text('Card Holder', style: TextStyle(color: Colors.grey, fontSize: 10)),
-                          Text((_isEditing ? _holderController.text : cardHolder).toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text((_holderController.text.isEmpty ? cardHolder : _holderController.text).toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
@@ -355,7 +386,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> with SingleTickerPr
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('Expires', style: TextStyle(color: Colors.grey, fontSize: 10)),
-                        Text(_isEditing ? _expiryController.text : expiryDate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text(_expiryController.text.isEmpty ? expiryDate : _expiryController.text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                       ],
                     ),
                   ],
@@ -399,7 +430,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> with SingleTickerPr
                     color: Colors.grey[300],
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.only(right: 8),
-                    child: Text(_isEditing ? _cvvController.text : (_showCVV ? cvv : '***'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    child: Text(_showCVV ? (_cvvController.text.isEmpty ? cvv : _cvvController.text) : '***', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -445,7 +476,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> with SingleTickerPr
 class CardNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    var inputText = newValue.text;
+    var inputText = newValue.text.replaceAll(' ', '');
     if (newValue.selection.baseOffset == 0) return newValue;
     var bufferString = StringBuffer();
     for (int i = 0; i < inputText.length; i++) {

@@ -33,6 +33,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
   ];
 
   late final List<Widget> _screens;
+  Offset? _fabPosition;
 
   @override
   void initState() {
@@ -50,68 +51,91 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
   Widget build(BuildContext context) {
     final selectedIndex = ref.watch(adminIndexProvider);
 
+    if (_fabPosition == null) {
+       final size = MediaQuery.of(context).size;
+       _fabPosition = Offset(size.width - 70, size.height - 150);
+    }
+
     return Scaffold(
-      body: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) async {
-          if (didPop) {
-            return;
-          }
-          final NavigatorState? navigator = _navigatorKeys[selectedIndex].currentState;
-          if (navigator != null && navigator.canPop()) {
-            navigator.pop();
-          } else {
-            if (selectedIndex != 0) {
-               ref.read(adminIndexProvider.notifier).setIndex(0);
-            }
-          }
-        },
-        child: IndexedStack(
-          index: selectedIndex,
-          children: _screens,
-        ),
-      ),
-      floatingActionButton: StreamBuilder<List<ChatSession>>(
-        stream: ChatService().getChatSessions(),
-        builder: (context, snapshot) {
-          int unreadCount = 0;
-          if (snapshot.hasData) {
-             unreadCount = snapshot.data!.where((s) => !s.isReadByAdmin).length;
-          }
-          return FloatingActionButton(
-             onPressed: () {
-               Navigator.of(context, rootNavigator: true).push(
-                 MaterialPageRoute(builder: (_) => const AdminChatListScreen()),
-               );
-             },
-             backgroundColor: Colors.blue,
-             child: Stack(
-               clipBehavior: Clip.none,
-               children: [
-                 const Icon(Icons.chat),
-                 if (unreadCount > 0)
-                   Positioned(
-                     right: -4,
-                     top: -4,
-                     child: Container(
-                       padding: const EdgeInsets.all(4),
-                       decoration: const BoxDecoration(
-                         color: Colors.red,
-                         shape: BoxShape.circle,
-                       ),
-                       constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                       child: Text(
-                         '$unreadCount',
-                         style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                         textAlign: TextAlign.center,
-                       ),
+      body: Stack(
+        children: [
+          PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, result) async {
+              if (didPop) {
+                return;
+              }
+              final NavigatorState? navigator = _navigatorKeys[selectedIndex].currentState;
+              if (navigator != null && navigator.canPop()) {
+                navigator.pop();
+              } else {
+                if (selectedIndex != 0) {
+                   ref.read(adminIndexProvider.notifier).setIndex(0);
+                }
+              }
+            },
+            child: IndexedStack(
+              index: selectedIndex,
+              children: _screens,
+            ),
+          ),
+          
+          Positioned(
+            left: _fabPosition!.dx,
+            top: _fabPosition!.dy,
+            child: GestureDetector(
+              onPanUpdate: (details) {
+                setState(() {
+                  _fabPosition = _fabPosition! + details.delta;
+                });
+              },
+              child: StreamBuilder<List<ChatSession>>(
+                stream: ChatService().getChatSessions(),
+                builder: (context, snapshot) {
+                  int unreadCount = 0;
+                  if (snapshot.hasData) {
+                     unreadCount = snapshot.data!.where((s) => !s.isReadByAdmin).length;
+                  }
+                  return FloatingActionButton(
+                     heroTag: 'admin_draggable_chat_fab',
+                     onPressed: () {
+                       Navigator.of(context, rootNavigator: true).push(
+                         MaterialPageRoute(builder: (_) => const AdminChatListScreen()),
+                       );
+                     },
+                     backgroundColor: Colors.blue,
+                     child: Stack(
+                       clipBehavior: Clip.none,
+                       children: [
+                         const Icon(Icons.chat),
+                         if (unreadCount > 0)
+                           Positioned(
+                             right: -4,
+                             top: -4,
+                             child: Container(
+                               padding: const EdgeInsets.all(4),
+                               decoration: const BoxDecoration(
+                                 color: Colors.red,
+                                 shape: BoxShape.circle,
+                               ),
+                               constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                               child: Text(
+                                 '$unreadCount',
+                                 style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                 textAlign: TextAlign.center,
+                               ),
+                             ),
+                           )
+                       ],
                      ),
-                   )
-               ],
-             ),
-          );
-        }
+                  );
+                }
+              ),
+            ),
+          ),
+        ],
       ),
+
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(

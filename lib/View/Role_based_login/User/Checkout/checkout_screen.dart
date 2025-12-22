@@ -24,7 +24,9 @@ import 'package:intl/intl.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/User/Checkout/payment_success_screen.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
-  const CheckoutScreen({super.key});
+  final String? voucherCode;
+  
+  const CheckoutScreen({super.key, this.voucherCode});
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -62,16 +64,29 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _user = user;
     });
 
-    // Check First Order Discount
-    final hasOrdered = await _orderRepo.hasUserOrdered(_userId);
-    if (!hasOrdered) {
-        final voucher = await _promoRepo.getVoucherByCode('FIRST10');
-        if (voucher != null && voucher.isActive && voucher.startDate.isBefore(DateTime.now()) && voucher.endDate.isAfter(DateTime.now())) {
-            if (mounted) {
-                setState(() {
-                    _appliedVoucher = voucher;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã áp dụng mã giảm giá ${voucher.code} cho đơn hàng đầu tiên!')));
+    // Check Applied Voucher from Cart
+    if (widget.voucherCode != null && widget.voucherCode!.isNotEmpty) {
+        final voucher = await _promoRepo.getVoucherByCode(widget.voucherCode!);
+        if (voucher != null && voucher.isActive) {
+             if (mounted) {
+                 setState(() {
+                     _appliedVoucher = voucher;
+                 });
+             }
+        }
+    } else {
+        // Only check First Order if no voucher was applied from cart
+        // Check First Order Discount
+        final hasOrdered = await _orderRepo.hasUserOrdered(_userId);
+        if (!hasOrdered) {
+            final voucher = await _promoRepo.getVoucherByCode('FIRST10');
+            if (voucher != null && voucher.isActive && voucher.startDate.isBefore(DateTime.now()) && voucher.endDate.isAfter(DateTime.now())) {
+                if (mounted) {
+                    setState(() {
+                        _appliedVoucher = voucher;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã áp dụng mã giảm giá ${voucher.code} cho đơn hàng đầu tiên!')));
+                }
             }
         }
     }
@@ -95,9 +110,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final subtotal = cartItems.fold(0.0, (sum, item) => sum + (item.product.price * item.quantity));
     final shippingFee = _shippingMethod == 'standard' ? _calculateShippingFeeVal(_user?.city ?? '') : 0.0;
     
-    // double discount = 0.0; // Removed per user request
+    double discount = 0.0;
+    if (_appliedVoucher != null) {
+        if (_appliedVoucher!.discountType == 'percent') {
+            discount = subtotal * (_appliedVoucher!.discountValue / 100);
+        } else {
+            discount = _appliedVoucher!.discountValue;
+        }
+        if (subtotal < _appliedVoucher!.minOrderValue) {
+            discount = 0;
+        }
+    }
     
-    final total = subtotal + shippingFee;
+    final total = (subtotal + shippingFee - discount) > 0 ? (subtotal + shippingFee - discount) : 0.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -663,7 +688,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         children: [
           _buildRow('Tạm tính', subtotal),
           _buildRow('Phí vận chuyển', shipping),
-          // _buildRow('Mã giảm giá', discount),
+          if (total < subtotal + shipping) 
+             _buildRow('Mã giảm giá', -(subtotal + shipping - total)),
+          
           const Divider(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

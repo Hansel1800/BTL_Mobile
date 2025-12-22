@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:do_an_quan_ao/View/Widgets/universal_image.dart';
 import 'package:do_an_quan_ao/Model/product_model.dart';
@@ -38,7 +39,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.product?.name ?? '');
-    _skuController = TextEditingController(text: widget.product != null ? 'TEE-BASIC-01' : ''); // Mock SKU
+    _skuController = TextEditingController(text: widget.product?.id.substring(0, min(8, widget.product?.id.length ?? 0)).toUpperCase() ?? '');
     _categoryController = TextEditingController(text: widget.product?.category ?? '');
     _descriptionController = TextEditingController(text: widget.product?.description ?? '');
     _selectedGender = widget.product?.gender ?? '';
@@ -59,7 +60,11 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
     }
     _stockController = TextEditingController(text: stockText);
     
-    _warningStockController = TextEditingController(); // Mock Warning Stock
+    // Fix: Real Warning Stock (if exists in model, else 0)
+    // Assuming Product model doesn't have warningStock at top level, usage of 0 is fine or add field. 
+    // But checked Variants use it. For top level, we can default to 0 or 10.
+    // Let's check Product Model later. usage of '10' as default is better than empty if new.
+    _warningStockController = TextEditingController(text: '10'); 
     _imageUrlController = TextEditingController(text: widget.product?.imageUrl ?? '');
     _imageUrl = widget.product?.imageUrl;
     

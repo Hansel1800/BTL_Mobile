@@ -113,7 +113,8 @@ class _RevenueDetailScreenState extends ConsumerState<RevenueDetailScreen> {
     DateTime previousEndDate;
     String comparisonText;
     String chartTitle;
-    List<String> chartLabels;
+    List<double> chartValues = [];
+    List<String> chartLabels = [];
 
     // 1. Determine Date Ranges
     if (period == 'Ngày') {
@@ -123,6 +124,10 @@ class _RevenueDetailScreenState extends ConsumerState<RevenueDetailScreen> {
       comparisonText = 'So với hôm qua';
       chartTitle = 'Khung giờ hôm nay';
       chartLabels = ['9h', '11h', '13h', '15h', '17h', '19h', '21h'];
+      
+      // Init buckets
+      chartValues = List.filled(7, 0.0); 
+
     } else if (period == 'Tuần') {
       // Find Monday of this week
       startDate = now.subtract(Duration(days: now.weekday - 1));
@@ -132,6 +137,9 @@ class _RevenueDetailScreenState extends ConsumerState<RevenueDetailScreen> {
       comparisonText = 'So với tuần trước';
       chartTitle = '7 ngày gần nhất';
       chartLabels = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+      
+      chartValues = List.filled(7, 0.0);
+
     } else { // Tháng
       startDate = DateTime(now.year, now.month, 1);
       previousStartDate = DateTime(now.year, now.month - 1, 1);
@@ -139,6 +147,8 @@ class _RevenueDetailScreenState extends ConsumerState<RevenueDetailScreen> {
       comparisonText = 'So với tháng trước';
       chartTitle = '4 tuần gần nhất';
       chartLabels = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'];
+      
+      chartValues = List.filled(4, 0.0);
     }
 
     // 2. Filter Orders
@@ -170,6 +180,41 @@ class _RevenueDetailScreenState extends ConsumerState<RevenueDetailScreen> {
     final productCountMap = <String, int>{};
 
     for (var order in currentOrders) {
+      // Create chart data
+      if (period == 'Ngày') {
+         final h = order.createdAt.hour;
+         // Buckets: 9h (starts 0), 11h (1), 13h (2), 15h (3), 17h (4), 19h (5), 21h (6)
+         // Map roughly: <10 -> 0, 10-12 -> 1, 12-14 -> 2...
+         // Simple: (h - 8) / 2. NO.
+         // Let's use if/else for safety
+         int index = -1;
+         if (h <= 10) index = 0;
+         else if (h <= 12) index = 1;
+         else if (h <= 14) index = 2;
+         else if (h <= 16) index = 3;
+         else if (h <= 18) index = 4;
+         else if (h <= 20) index = 5;
+         else index = 6;
+         
+         if (index >= 0 && index < 7) chartValues[index] += order.totalPrice;
+         
+      } else if (period == 'Tuần') {
+         // weekday: 1 (Mon) -> 7 (Sun). Index = weekday - 1.
+         int index = order.createdAt.weekday - 1;
+         if (index >= 0 && index < 7) chartValues[index] += order.totalPrice;
+         
+      } else { // Tháng
+         // Weeks: 1-7, 8-14, 15-21, 22+
+         final d = order.createdAt.day;
+         int index = 0;
+         if (d <= 7) index = 0;
+         else if (d <= 14) index = 1;
+         else if (d <= 21) index = 2;
+         else index = 3; // Rest
+         
+         if (index >= 0 && index < 4) chartValues[index] += order.totalPrice;
+      }
+
       for (var item in order.products) {
         productMap[item.productName] = (productMap[item.productName] ?? 0) + (item.price * item.quantity);
         productCountMap[item.productName] = (productCountMap[item.productName] ?? 0) + 1; // Count orders containing this product
@@ -201,6 +246,7 @@ class _RevenueDetailScreenState extends ConsumerState<RevenueDetailScreen> {
       'avgValue': _formatCurrencyCompact(currentAvg),
       'avgGrowth': '${avgGrowth >= 0 ? '+' : ''}${avgGrowth.toStringAsFixed(0)}% AOV',
       'categories': topProducts,
+      'chartValues': chartValues,
     };
   }
 
@@ -311,19 +357,51 @@ class _RevenueDetailScreenState extends ConsumerState<RevenueDetailScreen> {
               Row(
                 children: [
                   _buildLegendItem('Doanh thu', Colors.blue),
-                  const SizedBox(width: 12),
-                  _buildLegendItem('Mục tiêu', Colors.grey.shade300),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 20),
-          Container(
-            height: 150,
-            alignment: Alignment.center,
-            child: const Text('Chart Placeholder', style: TextStyle(color: Colors.grey)),
-            // TODO: Implement actual chart
-          ),
+            Container(
+              height: 150,
+              alignment: Alignment.bottomCenter,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: () {
+                    // Generate data points
+                    // We need to map data['chartLabels'] to actual values.
+                    // This requires passing the dataset or calculating it here.
+                    // Since _calculateData returns aggregate, we need to pass the breakdowns too.
+                    // For now, let's create a simple simulation based on the aggregate to avoid big refactor,
+                    // OR better: Update _calculateData to return 'chartValues'.
+                    
+                    List<double> values = data['chartValues'] ?? [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+                    double maxVal = values.reduce((curr, next) => curr > next ? curr : next);
+                    if (maxVal == 0) maxVal = 1;
+
+                    return values.asMap().entries.map((entry) {
+                       final height = (entry.value / maxVal) * 120; // Max height 120
+                       return Column(
+                         mainAxisAlignment: MainAxisAlignment.end,
+                         children: [
+                           if (entry.value > 0)
+                             Text(_formatCurrencyCompact(entry.value).replaceAll('₫', ''), style: const TextStyle(fontSize: 8, color: Colors.blue)),
+                           const SizedBox(height: 4),
+                           Container(
+                             width: 20,
+                             height: height > 0 ? height : 4, // Min height 4
+                             decoration: BoxDecoration(
+                               color: entry.value > 0 ? Colors.blue : Colors.blue.withOpacity(0.2),
+                               borderRadius: BorderRadius.circular(4),
+                             ),
+                           ),
+                         ],
+                       );
+                    }).toList();
+                }(),
+              ),
+            ),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -410,13 +488,21 @@ class _RevenueDetailScreenState extends ConsumerState<RevenueDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text(count, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name, 
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                Text(count, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [

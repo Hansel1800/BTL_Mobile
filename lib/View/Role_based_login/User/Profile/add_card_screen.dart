@@ -104,13 +104,31 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
       return;
     }
     
-    // Simple Month check
+    // Expiry Date Check
     final parts = _expiryController.text.split('/');
     if (parts.length == 2) {
       final month = int.tryParse(parts[0]) ?? 0;
+      final year = int.tryParse(parts[1]) ?? 0;
+      
       if (month < 1 || month > 12) {
         _showError('Tháng không hợp lệ');
         return;
+      }
+
+      final now = DateTime.now();
+      // Assume year 20xx
+      final fullYear = 2000 + year;
+      
+      final expiryDate = DateTime(fullYear, month);
+      // Logic: Must be at least 1 month in future from now. 
+      // e.g. If Now is Dec 2024, Min Expiry is Jan 2025.
+      // So expiryDate needs to be >= DateTime(now.year, now.month + 1)
+      
+      final minValidDate = DateTime(now.year, now.month + 1);
+
+      if (expiryDate.isBefore(minValidDate)) {
+         _showError('Thẻ hết hạn hoặc sắp hết hạn (cần > 1 tháng)');
+         return;
       }
     }
 
@@ -400,7 +418,7 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
                           const Text('Card Holder', style: TextStyle(color: Colors.grey, fontSize: 10)),
                           Text(
                             _cardHolder,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -452,7 +470,7 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
               children: [
                 Expanded(
                   child: Container(
-                    height: 36, // Reduced from 40
+                    height: 36, 
                     color: Colors.grey[300],
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.only(right: 8),
@@ -532,7 +550,7 @@ class CardNumberFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    var inputText = newValue.text;
+    var inputText = newValue.text.replaceAll(' ', '');
     if (newValue.selection.baseOffset == 0) return newValue;
 
     var bufferString = StringBuffer();

@@ -66,18 +66,24 @@ class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScr
                   final filteredProducts = products.where((p) {
                      // Search Filter
                      if (_searchController.text.isNotEmpty) {
-                        final query = _searchController.text.toLowerCase();
-                        if (!p.name.toLowerCase().contains(query) && !p.category.toLowerCase().contains(query)) {
+                        final query = _removeDiacritics(_searchController.text.toLowerCase());
+                        final pName = _removeDiacritics(p.name.toLowerCase());
+                        final pCat = _removeDiacritics(p.category.toLowerCase());
+                        
+                        if (!pName.contains(query) && !pCat.contains(query)) {
                           return false;
                         }
                      }
 
                      // Filter by Gender (Inclusive)
+                     // Filter by Gender (Inclusive)
                      final pGenderLowercase = p.gender.trim().toLowerCase();
                      final targetGenderLowercase = widget.gender.trim().toLowerCase();
                      bool genderMatch = false;
 
-                     if (targetGenderLowercase == 'nam') {
+                     if (targetGenderLowercase == 'tất cả') {
+                        genderMatch = true;
+                     } else if (targetGenderLowercase == 'nam') {
                         genderMatch = (pGenderLowercase == 'nam' || pGenderLowercase == 'unisex');
                      } else if (targetGenderLowercase == 'nữ') {
                         genderMatch = (pGenderLowercase == 'nữ' || pGenderLowercase == 'unisex');
@@ -610,5 +616,14 @@ class _UserCategoryDetailScreenState extends ConsumerState<UserCategoryDetailScr
   String _formatCurrency(double amount) {
     final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
     return formatter.format(amount);
+  }
+
+  String _removeDiacritics(String str) {
+    var withDia = 'áàảãạâấầẩẫậăắằẳẵặđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ';
+    var withoutDia = 'aaaaaaaaaaaaaaaaadeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyy';
+    for (int i = 0; i < withDia.length; i++) {
+      str = str.replaceAll(withDia[i], withoutDia[i]);
+    }
+    return str;
   }
 }
