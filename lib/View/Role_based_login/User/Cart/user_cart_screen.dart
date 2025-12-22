@@ -395,16 +395,8 @@ class _UserCartScreenState extends ConsumerState<UserCartScreen> {
                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Giỏ hàng trống!')));
                                return;
                              }
-                             // Pass voucher info to checkout if needed (typically handled by a provider or argument)
-                             // For simplicity here, we assume Checkout regenerates logic or we pass basic arguments?
-                             // User asked that "tạm tính" in Cart takes voucher. 
-                             // Usually Checkout re-verifies. 
-                             // We'll pass the voucher code to CheckoutScreen via arguments if possible, or simple let user re-apply.
-                             // But wait, the user said "voucher... hiển thị dialog phải là mã sinh ra ở dữ liệu thật".
-                             // And "Áp dụng mã khuyến mãi phải trừ thẳng vào giá".
-                             // We implemented that.
                              
-                             Navigator.push(context, MaterialPageRoute(builder: (context) => const CheckoutScreen()));
+                             Navigator.push(context, MaterialPageRoute(builder: (context) => CheckoutScreen(voucherCode: _appliedVoucherCode)));
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFC69C6D),
