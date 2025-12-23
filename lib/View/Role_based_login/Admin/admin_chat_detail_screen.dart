@@ -142,9 +142,11 @@ class _AdminChatDetailScreenState extends State<AdminChatDetailScreen> {
                       ),
                     );
                   },
-                  order: GroupedListOrder.ASC,
-                  useStickyGroupSeparators: true,
-                  floatingHeader: true,
+                  order: GroupedListOrder.DESC,
+                  itemComparator: (element1, element2) =>
+                      element1.timestamp.compareTo(element2.timestamp),
+                  useStickyGroupSeparators: false,
+                  floatingHeader: false,
                   reverse: true,
                 );
               },

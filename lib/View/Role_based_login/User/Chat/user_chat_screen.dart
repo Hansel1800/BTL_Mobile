@@ -183,17 +183,12 @@ class _UserChatScreenState extends State<UserChatScreen> {
                       ),
                     );
                   },
-                  order: GroupedListOrder.ASC, // Show oldest first? No, list is DESC.
-                  // Actually, generic ListView builder receives reversed list usually.
-                  // Let's check stream sort order.
-                  // Stream: orderBy('timestamp', descending: true) -> Newest first.
-                  // GroupedListView: order ASC means it sorts GROUPS ascending (Oldest dates top).
-                  // But elements inside?
-                  // We should inverse list or change stream order.
-                  // Let's use simple ListView.builder reverse: true
-                  useStickyGroupSeparators: true, 
-                  floatingHeader: true,
-                  reverse: true, // IMPORTANT for chat
+                  order: GroupedListOrder.DESC,
+                  itemComparator: (element1, element2) => 
+                      element1.timestamp.compareTo(element2.timestamp),
+                  useStickyGroupSeparators: false, 
+                  floatingHeader: false,
+                  reverse: true, 
                 );
               },
             ),
