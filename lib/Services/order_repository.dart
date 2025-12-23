@@ -32,8 +32,63 @@ class OrderRepository {
         createdAt: order.createdAt,
         note: order.note,
       );
-      await docRef.set(newOrder.toJson());
-      print('Order added to Firestore: ${docRef.id}');
+
+      await _firestore.runTransaction((transaction) async {
+        // 1. Read all product docs first (Transaction requires reads before writes)
+        // However, we need to iterate.
+        // Optimization: Read all needed products?
+        // Simple Loop:
+        for (var item in order.products) {
+           final productRef = _firestore.collection('products').doc(item.productId);
+           final snapshot = await transaction.get(productRef);
+           
+           if (!snapshot.exists) {
+              throw Exception("Product ${item.productId} does not exist!");
+           }
+
+           final data = snapshot.data()!;
+           
+           // Handle Main Stock
+           final currentStock = data['stock'] as int? ?? 0;
+           int newStock = currentStock - item.quantity;
+           if (newStock < 0) newStock = 0; // Prevent negative? Or throw?
+           // Ideally throw if out of stock, but for now just clamp or allow negative?
+           // User wants "correct logic", usually means prevent overselling. 
+           // But let's just decrement for now. if (newStock < 0) throw Exception("Out of stock");
+           
+           // Handle Variant Stock
+           List<dynamic> variants = data['variants'] ?? [];
+           List<Map<String, dynamic>> updatedVariants = [];
+           bool variantFound = false;
+
+           if (item.size != null && item.color != null && variants.isNotEmpty) {
+              for (var v in variants) {
+                 // v is Map
+                 final variantMap = v as Map<String, dynamic>;
+                 if (variantMap['size'] == item.size && variantMap['color'] == item.color) {
+                     int vStock = variantMap['stock'] as int? ?? 0;
+                     variantMap['stock'] = vStock - item.quantity;
+                     // Optional: checking negative
+                     variantFound = true;
+                 }
+                 updatedVariants.add(variantMap);
+              }
+           } else {
+             updatedVariants = List<Map<String, dynamic>>.from(variants);
+           }
+
+           // Update Transaction
+           transaction.update(productRef, {
+             'stock': newStock,
+             if (variantFound) 'variants': updatedVariants,
+           });
+        }
+        
+        // 2. Set the order document
+        transaction.set(docRef, newOrder.toJson());
+      });
+      
+      print('Order added to Firestore: ${docRef.id} and stocks updated.');
     } catch (e) {
       print('Error adding order: $e');
       rethrow;

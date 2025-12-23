@@ -59,13 +59,7 @@ class _RevenueDetailScreenState extends ConsumerState<RevenueDetailScreen> {
               if (shouldLogout == true) {
                 // Perform logout
                 await FirebaseAuth.instance.signOut();
-                
-                if (context.mounted) {
-                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
+                // AuthStateHandler handles navigation
               }
             },
           ),

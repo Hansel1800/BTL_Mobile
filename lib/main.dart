@@ -9,13 +9,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/Admin/admin_home_screen.dart';
 import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('Handling a background message ${message.messageId}');
+}
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    
     try {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
       
       // Kiểm tra kết nối Firestore trước khi chạy app (Optional logging)
       final authService = AuthService();
@@ -81,7 +89,12 @@ class _AuthStateHandlerState extends State<AuthStateHandler> {
             _userRole = userDoc['role'];
           });
         }
-      } //tranh viec setState neu widget disposed
+      } else {
+        // User logged out
+        setState(() {
+            _userRole = null;
+        });
+      }
     });
   }
 

@@ -114,6 +114,10 @@ class NotificationService {
     });
   }
 
+  Future<void> updateUserToken() async {
+    await _saveDeviceToken();
+  }
+
   Future<void> _saveDeviceToken() async {
     String? token = await _firebaseMessaging.getToken();
     String? uid = FirebaseAuth.instance.currentUser?.uid;

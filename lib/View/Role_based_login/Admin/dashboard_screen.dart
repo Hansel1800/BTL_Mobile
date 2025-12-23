@@ -67,13 +67,7 @@ class DashboardScreen extends ConsumerWidget {
 
               if (shouldLogout == true) {
                 await AuthService().signOut();
-                
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
+                // AuthStateHandler will handle navigation
               }
             },
           ),

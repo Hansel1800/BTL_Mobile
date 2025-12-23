@@ -53,10 +53,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     try {
       await FirebaseAuth.instance.signOut();
       if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
-        );
+         // No manual navigation needed, AuthStateHandler handles it
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

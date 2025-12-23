@@ -286,25 +286,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     // Create Order Items
     final orderItems = cartItems.map((item) {
-        String imageUrl = item.product.imageUrl;
-        // Try to find variant image
-        if (item.selectedSize != null && item.selectedColor != null) {
-            try {
-                final variant = item.product.variants.firstWhere(
-                    (v) => v.size == item.selectedSize && v.color == item.selectedColor
-                );
-                if (variant.imageUrl != null && variant.imageUrl!.isNotEmpty) {
-                    imageUrl = variant.imageUrl!;
-                }
-            } catch (_) {}
-        }
-        
         return OrderItem(
             productId: item.product.id,
             productName: item.product.name,
             quantity: item.quantity,
-            price: item.product.price,
-            imageUrl: imageUrl,
+            price: item.price, // access getter for correct variant price
+            imageUrl: item.image, // access getter for correct variant image
             size: item.selectedSize,
             color: item.selectedColor,
         );

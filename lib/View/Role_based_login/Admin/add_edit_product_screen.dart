@@ -643,12 +643,31 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text('Size $size • $color', style: const TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text(details, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              if (variant?.imageUrl != null && variant!.imageUrl!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: UniversalImage(
+                        imageUrl: variant.imageUrl!,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Size $size • $color', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(details, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                ],
+              ),
             ],
           ),
           if (!widget.isReadOnly)

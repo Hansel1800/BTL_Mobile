@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:do_an_quan_ao/Services/notification_service.dart';
 
 class AuthService {
   // Firebase auth
@@ -54,6 +55,7 @@ class AuthService {
         'isActive': true,
         'authorizedUsers': [userId], // Only this user can use it (optional logic)
       });
+      await NotificationService().updateUserToken(); // Update FCM Token
       return null; // thanh cong: khong co loi
     } catch (e) {
       return e.toString(); // loi: return exception
@@ -78,6 +80,8 @@ class AuthService {
           .collection("users")
           .doc(userCredential.user!.uid)
           .get();
+      
+      await NotificationService().updateUserToken(); // Update FCM Token
       return userDoc["role"]; // tra ve user or admin
     } catch (e) {
       return e.toString(); // loi: return exception

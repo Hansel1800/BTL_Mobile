@@ -57,12 +57,7 @@ class _PromotionManagementScreenState extends ConsumerState<PromotionManagementS
 
               if (shouldLogout == true) {
                 await FirebaseAuth.instance.signOut();
-                if (context.mounted) {
-                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
+                // AuthStateHandler will handle navigation
               }
             },
           ),

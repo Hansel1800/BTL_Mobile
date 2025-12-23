@@ -41,21 +41,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       isLoading = false;
     });
 
-    if (result == "Admin") {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AdminScreen()),
-      );
-    } else if (result == "User") {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const UserMainScreen()),
-      );
-    } else {
+    if (result != "Admin" && result != "User") {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Đăng nhập thất bại: $result")),
       );
     }
+    // No navigation needed here, AuthStateHandler listens to stream changes
+    // and will rebuild automatically.
   }
 
   @override

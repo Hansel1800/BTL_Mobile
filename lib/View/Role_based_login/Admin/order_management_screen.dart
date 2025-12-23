@@ -5,6 +5,7 @@ import 'package:do_an_quan_ao/View/Role_based_login/User/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:do_an_quan_ao/ViewModel/admin_provider.dart';
 
 class OrderManagementScreen extends ConsumerWidget {
   const OrderManagementScreen({super.key});
@@ -21,9 +22,8 @@ class OrderManagementScreen extends ConsumerWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-             if (Navigator.canPop(context)) {
-               Navigator.pop(context);
-             }
+             // Navigate back to Dashboard (Index 0)
+             ref.read(adminIndexProvider.notifier).setIndex(0);
           },
         ),
         title: const Text(
@@ -56,13 +56,7 @@ class OrderManagementScreen extends ConsumerWidget {
               if (shouldLogout == true) {
                 // Perform logout
                 await FirebaseAuth.instance.signOut();
-                
-                if (context.mounted) {
-                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
+                // AuthStateHandler will handle navigation
               }
             },
           ),

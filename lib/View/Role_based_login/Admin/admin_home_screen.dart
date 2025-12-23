@@ -48,13 +48,17 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final selectedIndex = ref.watch(adminIndexProvider);
-
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     if (_fabPosition == null) {
        final size = MediaQuery.of(context).size;
        _fabPosition = Offset(size.width - 70, size.height - 150);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedIndex = ref.watch(adminIndexProvider);
 
     return Scaffold(
       body: Stack(
@@ -237,12 +241,7 @@ class _ProductListTabState extends ConsumerState<ProductListTab> {
 
               if (shouldLogout == true) {
                 await FirebaseAuth.instance.signOut();
-                if (context.mounted) {
-                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
+                // AuthStateHandler handles navigation
               }
             },
           ),
@@ -581,7 +580,24 @@ class _ProductListTabState extends ConsumerState<ProductListTab> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "₫${product.price.toStringAsFixed(0)}", 
+                          () {
+                            double minPrice = product.price;
+                            double maxPrice = product.price;
+                            if (product.variants.isNotEmpty) {
+                               final prices = product.variants.map((e) => e.price).toList();
+                               // If base price is valid? usually variants override. 
+                               // Let's just take min/max of variants + base if needed.
+                               // Simplified: 
+                               if (prices.isNotEmpty) {
+                                  minPrice = prices.reduce((a, b) => a < b ? a : b);
+                                  maxPrice = prices.reduce((a, b) => a > b ? a : b);
+                               }
+                            }
+                            if (minPrice < maxPrice) {
+                               return "₫${minPrice.toStringAsFixed(0)} - ₫${maxPrice.toStringAsFixed(0)}";
+                            }
+                            return "₫${product.price.toStringAsFixed(0)}";
+                          }(),
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         Container(

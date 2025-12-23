@@ -113,6 +113,7 @@ class ChatService {
 
   // Get all messages for a specific chat (Used by both)
   Stream<List<ChatMessage>> getMessages(String userId) {
+    if (userId.isEmpty) return Stream.value([]);
     return _firestore
         .collection('chats')
         .doc(userId)
