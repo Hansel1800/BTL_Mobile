@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_quan_ao/Model/order_model.dart' as model;
+import 'package:do_an_quan_ao/Services/notification_service.dart';
 
 class OrderRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -110,6 +111,32 @@ class OrderRepository {
       await _firestore.collection(_collection).doc(orderId).update({
         'status': status,
       });
+
+      // Send Notification to User
+      final orderDoc = await _firestore.collection(_collection).doc(orderId).get();
+      if (orderDoc.exists) {
+         final userId = orderDoc.get('userId');
+         final userToken = await NotificationService().getUserToken(userId);
+         if (userToken != null) {
+            String title = 'Cập nhật đơn hàng';
+            String body = 'Đơn hàng của bạn đã chuyển sang trạng thái: $status';
+            
+            if (status.toLowerCase() == 'delivered') {
+               title = 'Giao hàng thành công';
+               body = 'Đơn hàng đã được giao thành công. Cảm ơn bạn đã mua sắm!';
+            } else if (status.toLowerCase() == 'cancelled' || status.toLowerCase() == 'đã hủy') {
+               title = 'Đơn hàng đã hủy';
+               body = 'Đơn hàng của bạn đã bị hủy.';
+            }
+
+            await NotificationService().sendPushNotification(
+              recipientToken: userToken,
+              title: title,
+              body: body,
+            );
+         }
+      }
+
     } catch (e) {
       print('Error updating order status: $e');
       rethrow;

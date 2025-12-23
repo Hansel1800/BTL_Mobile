@@ -38,7 +38,6 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      NotificationService().initialize();
       _checkNewUser();
     });
   }

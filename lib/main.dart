@@ -10,6 +10,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:do_an_quan_ao/View/Role_based_login/Admin/admin_home_screen.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:do_an_quan_ao/Services/notification_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -79,6 +80,9 @@ class _AuthStateHandlerState extends State<AuthStateHandler> {
         _currentUser = user;
       });
       if (user != null) {
+        // Initialize Notifications for ALL users (User & Admin)
+        NotificationService().initialize();
+
         final userDoc = await FirebaseFirestore.instance
             .collection("users")
             .doc(user.uid)
