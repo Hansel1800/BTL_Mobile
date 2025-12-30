@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Module 6: Profile & Cá Nhân</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1e1e2e;
+            color: #cdd6f4
+        }
+
+        .nav {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between
+        }
+
+        .nav a,
+        .nav h2,
+        .nav span {
+            color: #333;
+            text-decoration: none;
+            font-weight: bold
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px
+        }
+
+        .file {
+            background: #313244;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            overflow: hidden
+        }
+
+        .file-header {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            padding: 15px
+        }
+
+        .file-header h3 {
+            color: #333;
+            margin-bottom: 3px
+        }
+
+        .file-header .path {
+            color: #555;
+            font-family: monospace;
+            font-size: 0.85em
+        }
+
+        .exp {
+            padding: 15px;
+            background: #45475a
+        }
+
+        .exp h4 {
+            color: #f5c2e7;
+            margin-bottom: 8px
+        }
+
+        .exp ul {
+            padding-left: 18px
+        }
+
+        .exp li {
+            margin: 5px 0;
+            line-height: 1.5
+        }
+
+        .exp code {
+            background: #1e1e2e;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #a6e3a1;
+            font-size: 0.9em
+        }
+
+        .code {
+            background: #1e1e2e;
+            padding: 15px;
+            overflow: auto;
+            max-height: 350px
+        }
+
+        pre {
+            font-family: Consolas, monospace;
+            font-size: 10px;
+            line-height: 1.3
+        }
+
+        .ln {
+            color: #6c7086;
+            display: inline-block;
+            width: 25px;
+            text-align: right;
+            margin-right: 8px
+        }
+
+        .kw {
+            color: #cba6f7
+        }
+
+        .str {
+            color: #a6e3a1
+        }
+
+        .cmt {
+            color: #6c7086
+        }
+
+        .cls {
+            color: #f9e2af
+        }
+
+        .fn {
+            color: #89b4fa
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nav"><a href="index.html">← Quay lại</a>
+        <h2>Module 6: Profile & Cá Nhân</h2><span>7 files</span>
+    </div>
+    <div class="container">
+
+        <div class="file">
+            <div class="file-header">
+                <h3>📄 user_profile_screen.dart</h3>
+                <div class="path">lib/View/.../Profile/user_profile_screen.dart (237 dòng)</div>
+            </div>
+            <div class="exp">
+                <h4>🔄 Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 29-50:</strong> Fetch user data từ Firestore (fullName, email, phoneNumber,
+                        avatarUrl)</li>
+                    <li><strong>Dòng 52-63:</strong> <code>_logout()</code> - FirebaseAuth.signOut()</li>
+                    <li><strong>Dòng 137-203:</strong> Menu items: Thông tin cá nhân, Phương thức thanh toán, Đơn hàng,
+                        Đăng xuất</li>
+                </ul>
+            </div>
+            <div class="code">
+                <pre><span class="ln">29</span><span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_loadUserData</span>() <span class="kw">async</span> {
+<span class="ln">30</span>  <span class="kw">final</span> doc = <span class="kw">await</span> FirebaseFirestore.instance.collection(<span class="str">'users'</span>).doc(_userId).get();
+<span class="ln">31</span>  setState(() {
+<span class="ln">32</span>    _fullName = doc[<span class="str">'fullName'</span>] ?? <span class="str">'User'</span>;
+<span class="ln">33</span>    _email = doc[<span class="str">'email'</span>] ?? <span class="str">''</span>;
+<span class="ln">34</span>    _phone = doc[<span class="str">'phoneNumber'</span>] ?? <span class="str">''</span>;
+<span class="ln">35</span>    _avatarUrl = doc[<span class="str">'avatarUrl'</span>];
+<span class="ln">36</span>  });
+<span class="ln">37</span>}
+<span class="ln">52</span><span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_logout</span>() <span class="kw">async</span> {
+<span class="ln">53</span>  <span class="kw">await</span> FirebaseAuth.instance.signOut();
+<span class="ln">54</span>  <span class="cmt">// AuthStateHandler sẽ tự redirect về LoginScreen</span>
+<span class="ln">55</span>}
+<span class="ln">137</span><span class="cmt">// Menu items</span>
+<span class="ln">138</span><span class="fn">_buildMenuItem</span>(<span class="str">'Thông tin cá nhân'</span>, Icons.person, () => Navigator.push(ctx, UserProfileDetailScreen()));
+<span class="ln">139</span><span class="fn">_buildMenuItem</span>(<span class="str">'Phương thức thanh toán'</span>, Icons.credit_card, () => Navigator.push(ctx, UserPaymentMethodsScreen()));
+<span class="ln">140</span><span class="fn">_buildMenuItem</span>(<span class="str">'Đơn hàng của tôi'</span>, Icons.shopping_bag, () => Navigator.push(ctx, UserOrderHistoryScreen()));
+<span class="ln">141</span><span class="fn">_buildMenuItem</span>(<span class="str">'Đăng xuất'</span>, Icons.logout, _logout);</pre>
+            </div>
+        </div>
+
+        <div class="file">
+            <div class="file-header">
+                <h3>📄 user_profile_detail_screen.dart</h3>
+                <div class="path">lib/View/.../Profile/user_profile_detail_screen.dart (674 dòng)</div>
+            </div>
+            <div class="exp">
+                <h4>🔄 Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 88-127:</strong> Fetch & populate form với dữ liệu hiện tại</li>
+                    <li><strong>Dòng 143-179:</strong> <code>_saveChanges()</code> - Update Firestore với
+                        SetOptions(merge: true)</li>
+                    <li><strong>Dòng 287-305:</strong> Gender ChipChoice (Nam, Nữ, Khác, Không tiết lộ)</li>
+                    <li><strong>Dòng 486-522:</strong> City Selection BottomSheet với tìm kiếm</li>
+                    <li><strong>Dòng 525-555:</strong> Auto calculate shipping fee theo vùng miền</li>
+                </ul>
+            </div>
+            <div class="code">
+                <pre><span class="ln">143</span><span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_saveChanges</span>() <span class="kw">async</span> {
+<span class="ln">144</span>  <span class="kw">await</span> FirebaseFirestore.instance.collection(<span class="str">'users'</span>).doc(_userId).set({
+<span class="ln">145</span>    <span class="str">'fullName'</span>: _nameController.text,
+<span class="ln">146</span>    <span class="str">'phoneNumber'</span>: _phoneController.text,
+<span class="ln">147</span>    <span class="str">'dob'</span>: _selectedDob,
+<span class="ln">148</span>    <span class="str">'gender'</span>: _selectedGender,
+<span class="ln">149</span>    <span class="str">'city'</span>: _selectedCity,
+<span class="ln">150</span>    <span class="str">'address'</span>: _addressController.text,
+<span class="ln">151</span>    <span class="str">'preferences'</span>: _selectedPreferences,
+<span class="ln">152</span>    <span class="str">'shippingFee'</span>: <span class="fn">_calculateShippingFee</span>(_selectedCity),
+<span class="ln">153</span>  }, <span class="cls">SetOptions</span>(merge: <span class="kw">true</span>));
+<span class="ln">154</span>}
+<span class="ln">525</span><span class="kw">double</span> <span class="fn">_calculateShippingFee</span>(<span class="cls">String</span>? city) {
+<span class="ln">526</span>  <span class="kw">if</span> (city == <span class="kw">null</span>) <span class="kw">return</span> 50000;
+<span class="ln">527</span>  <span class="kw">final</span> mienBac = [<span class="str">'Hà Nội'</span>, <span class="str">'Hải Phòng'</span>, <span class="str">'Quảng Ninh'</span>...];
+<span class="ln">528</span>  <span class="kw">final</span> mienNam = [<span class="str">'TP.HCM'</span>, <span class="str">'Bình Dương'</span>, <span class="str">'Đồng Nai'</span>...];
+<span class="ln">529</span>  <span class="kw">if</span> (mienNam.contains(city)) <span class="kw">return</span> 25000; <span class="cmt">// Gần kho</span>
+<span class="ln">530</span>  <span class="kw">if</span> (mienBac.contains(city)) <span class="kw">return</span> 35000;
+<span class="ln">531</span>  <span class="kw">return</span> 50000; <span class="cmt">// Miền Trung/Tây Nguyên</span>
+<span class="ln">532</span>}</pre>
+            </div>
+        </div>
+
+        <div class="file">
+            <div class="file-header">
+                <h3>📄 user_order_history_screen.dart</h3>
+                <div class="path">lib/View/.../Profile/user_order_history_screen.dart (289 dòng)</div>
+            </div>
+            <div class="exp">
+                <h4>🔄 Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 22:</strong> Filter statuses: Tất cả, Chờ xác nhận, Đang giao, Đã giao, Đã hủy</li>
+                    <li><strong>Dòng 44-77:</strong> <code>_cancelOrder()</code> - Xác nhận hủy + Update status</li>
+                    <li><strong>Dòng 138-282:</strong> StreamBuilder với filter theo status</li>
+                </ul>
+            </div>
+            <div class="code">
+                <pre><span class="ln">22</span><span class="kw">final</span> statuses = [<span class="str">'Tất cả'</span>, <span class="str">'Chờ xác nhận'</span>, <span class="str">'Đang giao'</span>, <span class="str">'Đã giao'</span>, <span class="str">'Đã hủy'</span>];
+<span class="ln">44</span><span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_cancelOrder</span>(<span class="cls">String</span> orderId) <span class="kw">async</span> {
+<span class="ln">45</span>  <span class="kw">final</span> confirm = <span class="kw">await</span> showDialog&lt;<span class="kw">bool</span>&gt;(ctx, builder: (_) => <span class="cls">AlertDialog</span>(
+<span class="ln">46</span>    title: <span class="cls">Text</span>(<span class="str">'Xác nhận hủy đơn?'</span>),
+<span class="ln">47</span>    actions: [
+<span class="ln">48</span>      <span class="cls">TextButton</span>(onPressed: () => Navigator.pop(ctx, <span class="kw">false</span>), child: <span class="cls">Text</span>(<span class="str">'Không'</span>)),
+<span class="ln">49</span>      <span class="cls">TextButton</span>(onPressed: () => Navigator.pop(ctx, <span class="kw">true</span>), child: <span class="cls">Text</span>(<span class="str">'Hủy đơn'</span>)),
+<span class="ln">50</span>    ],
+<span class="ln">51</span>  ));
+<span class="ln">52</span>  <span class="kw">if</span> (confirm == <span class="kw">true</span>) {
+<span class="ln">53</span>    <span class="kw">await</span> FirebaseFirestore.instance.collection(<span class="str">'orders'</span>).doc(orderId).update({<span class="str">'status'</span>: <span class="str">'Đã hủy'</span>});
+<span class="ln">54</span>  }
+<span class="ln">55</span>}</pre>
+            </div>
+        </div>
+
+        <div class="file">
+            <div class="file-header">
+                <h3>📄 user_order_detail_screen.dart</h3>
+                <div class="path">lib/View/.../Profile/user_order_detail_screen.dart (238 dòng)</div>
+            </div>
+            <div class="exp">
+                <h4>🔄 Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 110-127:</strong> Status Card với màu sắc theo trạng thái</li>
+                    <li><strong>Dòng 130-150:</strong> Address Card (tên, SĐT, địa chỉ, ghi chú)</li>
+                    <li><strong>Dòng 153-210:</strong> Product List với tổng tiền</li>
+                    <li><strong>Dòng 215-231:</strong> Cancel Button (chỉ khi status = "Chờ xác nhận")</li>
+                </ul>
+            </div>
+            <div class="code">
+                <pre><span class="ln">110</span><span class="cmt">// Status with color</span>
+<span class="ln">111</span><span class="cls">Color</span> <span class="fn">_getStatusColor</span>(<span class="cls">String</span> status) {
+<span class="ln">112</span>  <span class="kw">switch</span> (status) {
+<span class="ln">113</span>    <span class="kw">case</span> <span class="str">'Chờ xác nhận'</span>: <span class="kw">return</span> Colors.orange;
+<span class="ln">114</span>    <span class="kw">case</span> <span class="str">'Đang giao'</span>: <span class="kw">return</span> Colors.blue;
+<span class="ln">115</span>    <span class="kw">case</span> <span class="str">'Đã giao'</span>: <span class="kw">return</span> Colors.green;
+<span class="ln">116</span>    <span class="kw">case</span> <span class="str">'Đã hủy'</span>: <span class="kw">return</span> Colors.red;
+<span class="ln">117</span>    <span class="kw">default</span>: <span class="kw">return</span> Colors.grey;
+<span class="ln">118</span>  }
+<span class="ln">119</span>}
+<span class="ln">215</span><span class="cmt">// Cancel button only for pending orders</span>
+<span class="ln">216</span><span class="kw">if</span> (order.status == <span class="str">'Chờ xác nhận'</span>)
+<span class="ln">217</span>  <span class="cls">ElevatedButton</span>(onPressed: () => <span class="fn">_cancelOrder</span>(order.id), child: <span class="cls">Text</span>(<span class="str">'Hủy đơn hàng'</span>))</pre>
+            </div>
+        </div>
+
+        <div class="file">
+            <div class="file-header">
+                <h3>📄 user_payment_methods_screen.dart</h3>
+                <div class="path">lib/View/.../Profile/user_payment_methods_screen.dart (486 dòng)</div>
+            </div>
+            <div class="exp">
+                <h4>🔄 Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 22-63:</strong> <code>_showAddMethodBottomSheet()</code> - Chọn loại: Visa/Master,
+                        MoMo, COD</li>
+                    <li><strong>Dòng 65-99:</strong> <code>_showMomoDialog()</code> - Nhập SĐT MoMo</li>
+                    <li><strong>Dòng 259-318:</strong> <code>_buildWalletStack()</code> - Stack thẻ với animation focus
+                    </li>
+                    <li><strong>Dòng 320-416:</strong> <code>_buildCreditCardVisual()</code> - Card gradient với masked
+                        number</li>
+                </ul>
+            </div>
+            <div class="code">
+                <pre><span class="ln">259</span><span class="cmt">// Card stack with animation</span>
+<span class="ln">260</span><span class="cls">Widget</span> <span class="fn">_buildWalletStack</span>() {
+<span class="ln">261</span>  <span class="kw">return</span> <span class="cls">Stack</span>(
+<span class="ln">262</span>    children: cards.asMap().entries.map((e) {
+<span class="ln">263</span>      <span class="kw">final</span> i = e.key, card = e.value;
+<span class="ln">264</span>      <span class="kw">return</span> <span class="cls">AnimatedPositioned</span>(
+<span class="ln">265</span>        duration: Duration(ms: 300),
+<span class="ln">266</span>        top: i == _focusedIndex ? 0 : 20 + i * 60,
+<span class="ln">267</span>        child: <span class="cls">GestureDetector</span>(
+<span class="ln">268</span>          onTap: () => setState(() => _focusedIndex = i),
+<span class="ln">269</span>          child: <span class="fn">_buildCreditCardVisual</span>(card),
+<span class="ln">270</span>        ),
+<span class="ln">271</span>      );
+<span class="ln">272</span>    }).toList(),
+<span class="ln">273</span>  );
+<span class="ln">274</span>}</pre>
+            </div>
+        </div>
+
+        <div class="file">
+            <div class="file-header">
+                <h3>📄 add_card_screen.dart</h3>
+                <div class="path">lib/View/.../Profile/add_card_screen.dart (596 dòng)</div>
+            </div>
+            <div class="exp">
+                <h4>🔄 Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 34-76:</strong> Animation Controllers cho flip card effect</li>
+                    <li><strong>Dòng 89-183:</strong> <code>_validateAndSave()</code> - Validate: 16 số, holder, expiry,
+                        CVV 3 số</li>
+                    <li><strong>Dòng 347-444:</strong> <code>_buildCardFront()</code> - Visual card mặt trước với
+                        gradient</li>
+                    <li><strong>Dòng 446-504:</strong> <code>_buildCardBack()</code> - Mặt sau với CVV</li>
+                    <li><strong>Dòng 547-595:</strong> Custom TextInputFormatters (4-4-4-4 và MM/YY)</li>
+                </ul>
+            </div>
+            <div class="code">
+                <pre><span class="ln">34</span><span class="cmt">// Flip animation</span>
+<span class="ln">35</span><span class="kw">late</span> <span class="cls">AnimationController</span> _flipController;
+<span class="ln">36</span><span class="kw">late</span> <span class="cls">Animation</span>&lt;<span class="kw">double</span>&gt; _flipAnimation;
+<span class="ln">37</span>
+<span class="ln">89</span><span class="kw">void</span> <span class="fn">_validateAndSave</span>() {
+<span class="ln">90</span>  <span class="kw">final</span> number = _numberController.text.replaceAll(<span class="str">' '</span>, <span class="str">''</span>);
+<span class="ln">91</span>  <span class="kw">if</span> (number.length != 16) { <span class="fn">_showError</span>(<span class="str">'Số thẻ phải có 16 số'</span>); <span class="kw">return</span>; }
+<span class="ln">92</span>  <span class="kw">if</span> (_holderController.text.isEmpty) { <span class="fn">_showError</span>(<span class="str">'Vui lòng nhập tên chủ thẻ'</span>); <span class="kw">return</span>; }
+<span class="ln">93</span>  <span class="kw">if</span> (_cvvController.text.length != 3) { <span class="fn">_showError</span>(<span class="str">'CVV phải có 3 số'</span>); <span class="kw">return</span>; }
+<span class="ln">94</span>  <span class="cmt">// Save to Firestore</span>
+<span class="ln">95</span>  <span class="kw">await</span> UserRepository().addPaymentMethod({
+<span class="ln">96</span>    <span class="str">'type'</span>: <span class="str">'card'</span>, <span class="str">'number'</span>: number, <span class="str">'holder'</span>: _holderController.text,
+<span class="ln">97</span>    <span class="str">'expiry'</span>: _expiryController.text, <span class="str">'cvv'</span>: _cvvController.text,
+<span class="ln">98</span>  });
+<span class="ln">99</span>}
+<span class="ln">547</span><span class="cmt">// Card number formatter: 1234 5678 9012 3456</span>
+<span class="ln">548</span><span class="kw">class</span> <span class="cls">CardNumberFormatter</span> <span class="kw">extends</span> <span class="cls">TextInputFormatter</span> {
+<span class="ln">549</span>  <span class="cls">TextEditingValue</span> <span class="fn">formatEditUpdate</span>(old, new) {
+<span class="ln">550</span>    <span class="kw">var</span> text = new.text.replaceAll(<span class="str">' '</span>, <span class="str">''</span>);
+<span class="ln">551</span>    <span class="kw">var</span> formatted = <span class="str">''</span>;
+<span class="ln">552</span>    <span class="kw">for</span> (<span class="kw">int</span> i = 0; i < text.length; i++) {
+<span class="ln">553</span>      <span class="kw">if</span> (i > 0 && i % 4 == 0) formatted += <span class="str">' '</span>;
+<span class="ln">554</span>      formatted += text[i];
+<span class="ln">555</span>    }
+<span class="ln">556</span>    <span class="kw">return</span> <span class="cls">TextEditingValue</span>(text: formatted);
+<span class="ln">557</span>  }
+<span class="ln">558</span>}</pre>
+            </div>
+        </div>
+
+        <div class="file">
+            <div class="file-header">
+                <h3>📄 card_detail_screen.dart</h3>
+                <div class="path">lib/View/.../Profile/card_detail_screen.dart (507 dòng)</div>
+            </div>
+            <div class="exp">
+                <h4>🔄 Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 54-61:</strong> <code>_toggleCard()</code> - Flip animation</li>
+                    <li><strong>Dòng 205-232:</strong> <code>_deleteCard()</code> - Xóa thẻ khỏi Firestore</li>
+                    <li><strong>Dòng 234-305:</strong> <code>_saveChanges()</code> - Validate + Update thẻ</li>
+                </ul>
+            </div>
+            <div class="code">
+                <pre><span class="ln">205</span><span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_deleteCard</span>() <span class="kw">async</span> {
+<span class="ln">206</span>  <span class="kw">final</span> confirm = <span class="kw">await</span> showDialog&lt;<span class="kw">bool</span>&gt;(...);
+<span class="ln">207</span>  <span class="kw">if</span> (confirm == <span class="kw">true</span>) {
+<span class="ln">208</span>    <span class="kw">await</span> UserRepository().deletePaymentMethod(widget.cardId);
+<span class="ln">209</span>    Navigator.pop(ctx);
+<span class="ln">210</span>  }
+<span class="ln">211</span>}</pre>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

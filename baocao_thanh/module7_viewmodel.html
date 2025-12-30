@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Module 7: ViewModels UX</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1e1e2e;
+            color: #cdd6f4
+        }
+
+        .nav {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between
+        }
+
+        .nav a,
+        .nav h2,
+        .nav span {
+            color: #333;
+            text-decoration: none;
+            font-weight: bold
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px
+        }
+
+        .file {
+            background: #313244;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            overflow: hidden
+        }
+
+        .file-header {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            padding: 15px
+        }
+
+        .file-header h3 {
+            color: #333;
+            margin-bottom: 3px
+        }
+
+        .file-header .path {
+            color: #555;
+            font-family: monospace;
+            font-size: 0.85em
+        }
+
+        .exp {
+            padding: 15px;
+            background: #45475a
+        }
+
+        .exp h4 {
+            color: #f5c2e7;
+            margin-bottom: 8px
+        }
+
+        .exp ul {
+            padding-left: 18px
+        }
+
+        .exp li {
+            margin: 5px 0;
+            line-height: 1.5
+        }
+
+        .exp code {
+            background: #1e1e2e;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #a6e3a1;
+            font-size: 0.9em
+        }
+
+        .code {
+            background: #1e1e2e;
+            padding: 15px;
+            overflow: auto;
+            max-height: 500px
+        }
+
+        pre {
+            font-family: Consolas, monospace;
+            font-size: 11px;
+            line-height: 1.4
+        }
+
+        .ln {
+            color: #6c7086;
+            display: inline-block;
+            width: 25px;
+            text-align: right;
+            margin-right: 8px
+        }
+
+        .kw {
+            color: #cba6f7
+        }
+
+        .str {
+            color: #a6e3a1
+        }
+
+        .cmt {
+            color: #6c7086
+        }
+
+        .cls {
+            color: #f9e2af
+        }
+
+        .fn {
+            color: #89b4fa
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nav"><a href="index.html">← Quay lại</a>
+        <h2>Module 7: ViewModels UX</h2><span>2 files</span>
+    </div>
+    <div class="container">
+
+        <div class="file">
+            <div class="file-header">
+                <h3>📄 navigation_provider.dart - State Management Navigation</h3>
+                <div class="path">lib/ViewModel/navigation_provider.dart (39 dòng)</div>
+            </div>
+            <div class="exp">
+                <h4>🔄 Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 3-15:</strong> <code>NavigationState</code> - Lưu currentIndex và
+                        showBackInCategory</li>
+                    <li><strong>Dòng 17-36:</strong> <code>NavigationNotifier</code> với Riverpod Notifier pattern</li>
+                    <li><strong>Dòng 23-27:</strong> <code>setIndex()</code> - Đổi tab và reset showBack</li>
+                    <li><strong>Dòng 29-35:</strong> <code>goHomeFromCategory()</code> /
+                        <code>goToCategoryFromHome()</code> - Cross-tab navigation
+                    </li>
+                </ul>
+            </div>
+            <div class="code">
+                <pre><span class="ln">1</span><span class="kw">import</span> <span class="str">'package:flutter_riverpod/flutter_riverpod.dart'</span>;
+<span class="ln">2</span>
+<span class="ln">3</span><span class="cmt">// State class</span>
+<span class="ln">4</span><span class="kw">class</span> <span class="cls">NavigationState</span> {
+<span class="ln">5</span>  <span class="kw">final</span> <span class="kw">int</span> currentIndex;
+<span class="ln">6</span>  <span class="kw">final</span> <span class="kw">bool</span> showBackInCategory;
+<span class="ln">7</span>
+<span class="ln">8</span>  <span class="kw">const</span> <span class="cls">NavigationState</span>({
+<span class="ln">9</span>    <span class="kw">this</span>.currentIndex = 0,
+<span class="ln">10</span>    <span class="kw">this</span>.showBackInCategory = <span class="kw">false</span>,
+<span class="ln">11</span>  });
+<span class="ln">12</span>
+<span class="ln">13</span>  <span class="cls">NavigationState</span> <span class="fn">copyWith</span>({<span class="kw">int</span>? currentIndex, <span class="kw">bool</span>? showBackInCategory}) {
+<span class="ln">14</span>    <span class="kw">return</span> <span class="cls">NavigationState</span>(
+<span class="ln">15</span>      currentIndex: currentIndex ?? <span class="kw">this</span>.currentIndex,
+<span class="ln">16</span>      showBackInCategory: showBackInCategory ?? <span class="kw">this</span>.showBackInCategory,
+<span class="ln">17</span>    );
+<span class="ln">18</span>  }
+<span class="ln">19</span>}
+<span class="ln">20</span>
+<span class="ln">21</span><span class="cmt">// Notifier class</span>
+<span class="ln">22</span><span class="kw">class</span> <span class="cls">NavigationNotifier</span> <span class="kw">extends</span> <span class="cls">Notifier</span>&lt;<span class="cls">NavigationState</span>&gt; {
+<span class="ln">23</span>  <span class="kw">@override</span>
+<span class="ln">24</span>  <span class="cls">NavigationState</span> <span class="fn">build</span>() =&gt; <span class="kw">const</span> <span class="cls">NavigationState</span>();
+<span class="ln">25</span>
+<span class="ln">26</span>  <span class="kw">void</span> <span class="fn">setIndex</span>(<span class="kw">int</span> index) {
+<span class="ln">27</span>    state = state.<span class="fn">copyWith</span>(currentIndex: index, showBackInCategory: <span class="kw">false</span>);
+<span class="ln">28</span>  }
+<span class="ln">29</span>
+<span class="ln">30</span>  <span class="kw">void</span> <span class="fn">setShowBackInCategory</span>(<span class="kw">bool</span> show) {
+<span class="ln">31</span>    state = state.<span class="fn">copyWith</span>(showBackInCategory: show);
+<span class="ln">32</span>  }
+<span class="ln">33</span>
+<span class="ln">34</span>  <span class="cmt">// Navigate from category back to home</span>
+<span class="ln">35</span>  <span class="kw">void</span> <span class="fn">goHomeFromCategory</span>() {
+<span class="ln">36</span>    state = state.<span class="fn">copyWith</span>(currentIndex: 0, showBackInCategory: <span class="kw">false</span>);
+<span class="ln">37</span>  }
+<span class="ln">38</span>
+<span class="ln">39</span>  <span class="cmt">// Navigate from home to category</span>
+<span class="ln">40</span>  <span class="kw">void</span> <span class="fn">goToCategoryFromHome</span>() {
+<span class="ln">41</span>    state = state.<span class="fn">copyWith</span>(currentIndex: 1, showBackInCategory: <span class="kw">true</span>);
+<span class="ln">42</span>  }
+<span class="ln">43</span>}
+<span class="ln">44</span>
+<span class="ln">45</span><span class="cmt">// Provider</span>
+<span class="ln">46</span><span class="kw">final</span> navigationProvider = <span class="cls">NotifierProvider</span>&lt;<span class="cls">NavigationNotifier</span>, <span class="cls">NavigationState</span>&gt;(
+<span class="ln">47</span>  () =&gt; <span class="cls">NavigationNotifier</span>(),
+<span class="ln">48</span>);</pre>
+            </div>
+        </div>
+
+        <div class="file">
+            <div class="file-header">
+                <h3>📄 user_main_screen.dart - Wrapper Layout với Bottom Navigation</h3>
+                <div class="path">lib/View/Role_based_login/User/user_main_screen.dart (171 dòng)</div>
+            </div>
+            <div class="exp">
+                <h4>🔄 Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 20-26:</strong> <code>_screens</code> list: Home, Category, Cart, Wishlist, Profile
+                    </li>
+                    <li><strong>Dòng 35-38:</strong> <code>IndexedStack</code> - Giữ state của tất cả screens</li>
+                    <li><strong>Dòng 39-52:</strong> Center FAB cho Cart với dynamic color khi selected</li>
+                    <li><strong>Dòng 54-78:</strong> <code>BottomAppBar</code> với CustomNotchedRectangle</li>
+                    <li><strong>Dòng 111-169:</strong> <code>CustomNotchedRectangle</code> - Custom NotchedShape với
+                        bezier curves</li>
+                </ul>
+            </div>
+            <div class="code">
+                <pre><span class="ln">1</span><span class="kw">import</span> <span class="str">'package:flutter/material.dart'</span>;
+<span class="ln">2</span><span class="kw">import</span> <span class="str">'package:flutter_riverpod/flutter_riverpod.dart'</span>;
+<span class="ln">3</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/ViewModel/navigation_provider.dart'</span>;
+<span class="ln">4</span>
+<span class="ln">5</span><span class="kw">class</span> <span class="cls">UserMainScreen</span> <span class="kw">extends</span> <span class="cls">ConsumerWidget</span> {
+<span class="ln">6</span>  <span class="kw">const</span> <span class="cls">UserMainScreen</span>({<span class="kw">super</span>.key});
+<span class="ln">7</span>
+<span class="ln">8</span>  <span class="cmt">// List of main screens</span>
+<span class="ln">9</span>  <span class="kw">static</span> <span class="kw">final</span> _screens = [
+<span class="ln">10</span>    <span class="kw">const</span> <span class="cls">UserHomeScreen</span>(),       <span class="cmt">// index 0</span>
+<span class="ln">11</span>    <span class="kw">const</span> <span class="cls">UserCategoryScreen</span>(),   <span class="cmt">// index 1</span>
+<span class="ln">12</span>    <span class="kw">const</span> <span class="cls">UserCartScreen</span>(),       <span class="cmt">// index 2 (center FAB)</span>
+<span class="ln">13</span>    <span class="kw">const</span> <span class="cls">UserWishlistScreen</span>(),   <span class="cmt">// index 3</span>
+<span class="ln">14</span>    <span class="kw">const</span> <span class="cls">UserProfileScreen</span>(),    <span class="cmt">// index 4</span>
+<span class="ln">15</span>  ];
+<span class="ln">16</span>
+<span class="ln">17</span>  <span class="kw">@override</span>
+<span class="ln">18</span>  <span class="cls">Widget</span> <span class="fn">build</span>(<span class="cls">BuildContext</span> context, <span class="cls">WidgetRef</span> ref) {
+<span class="ln">19</span>    <span class="kw">final</span> navState = ref.<span class="fn">watch</span>(navigationProvider);
+<span class="ln">20</span>    <span class="kw">final</span> currentIndex = navState.currentIndex;
+<span class="ln">21</span>
+<span class="ln">22</span>    <span class="kw">return</span> <span class="cls">Scaffold</span>(
+<span class="ln">23</span>      <span class="cmt">// IndexedStack keeps state of all screens</span>
+<span class="ln">24</span>      body: <span class="cls">IndexedStack</span>(
+<span class="ln">25</span>        index: currentIndex,
+<span class="ln">26</span>        children: _screens,
+<span class="ln">27</span>      ),
+<span class="ln">28</span>
+<span class="ln">29</span>      <span class="cmt">// Center FAB for Cart</span>
+<span class="ln">30</span>      floatingActionButton: <span class="cls">FloatingActionButton</span>(
+<span class="ln">31</span>        onPressed: () =&gt; ref.<span class="fn">read</span>(navigationProvider.notifier).<span class="fn">setIndex</span>(2),
+<span class="ln">32</span>        backgroundColor: currentIndex == 2 
+<span class="ln">33</span>          ? <span class="kw">const</span> <span class="cls">Color</span>(0xFFD29062) 
+<span class="ln">34</span>          : <span class="cls">Colors</span>.grey[300],
+<span class="ln">35</span>        child: <span class="cls">Icon</span>(<span class="cls">Icons</span>.shopping_bag, 
+<span class="ln">36</span>          color: currentIndex == 2 ? <span class="cls">Colors</span>.white : <span class="cls">Colors</span>.grey[600]),
+<span class="ln">37</span>      ),
+<span class="ln">38</span>      floatingActionButtonLocation: <span class="cls">FloatingActionButtonLocation</span>.centerDocked,
+<span class="ln">39</span>
+<span class="ln">40</span>      <span class="cmt">// Custom BottomAppBar with notch</span>
+<span class="ln">41</span>      bottomNavigationBar: <span class="cls">BottomAppBar</span>(
+<span class="ln">42</span>        shape: <span class="kw">const</span> <span class="cls">CustomNotchedRectangle</span>(),
+<span class="ln">43</span>        notchMargin: 8,
+<span class="ln">44</span>        child: <span class="cls">Row</span>(
+<span class="ln">45</span>          mainAxisAlignment: <span class="cls">MainAxisAlignment</span>.spaceAround,
+<span class="ln">46</span>          children: [
+<span class="ln">47</span>            <span class="fn">_buildNavItem</span>(ref, 0, <span class="cls">Icons</span>.home, <span class="str">'Trang chủ'</span>),
+<span class="ln">48</span>            <span class="fn">_buildNavItem</span>(ref, 1, <span class="cls">Icons</span>.category, <span class="str">'Danh mục'</span>),
+<span class="ln">49</span>            <span class="kw">const</span> <span class="cls">SizedBox</span>(width: 48), <span class="cmt">// Space for FAB</span>
+<span class="ln">50</span>            <span class="fn">_buildNavItem</span>(ref, 3, <span class="cls">Icons</span>.favorite, <span class="str">'Yêu thích'</span>),
+<span class="ln">51</span>            <span class="fn">_buildNavItem</span>(ref, 4, <span class="cls">Icons</span>.person, <span class="str">'Tài khoản'</span>),
+<span class="ln">52</span>          ],
+<span class="ln">53</span>        ),
+<span class="ln">54</span>      ),
+<span class="ln">55</span>    );
+<span class="ln">56</span>  }
+<span class="ln">57</span>
+<span class="ln">58</span>  <span class="cls">Widget</span> <span class="fn">_buildNavItem</span>(<span class="cls">WidgetRef</span> ref, <span class="kw">int</span> index, <span class="cls">IconData</span> icon, <span class="cls">String</span> label) {
+<span class="ln">59</span>    <span class="kw">final</span> isSelected = ref.<span class="fn">watch</span>(navigationProvider).currentIndex == index;
+<span class="ln">60</span>    <span class="kw">return</span> <span class="cls">InkWell</span>(
+<span class="ln">61</span>      onTap: () =&gt; ref.<span class="fn">read</span>(navigationProvider.notifier).<span class="fn">setIndex</span>(index),
+<span class="ln">62</span>      child: <span class="cls">Column</span>(mainAxisSize: <span class="cls">MainAxisSize</span>.min, children: [
+<span class="ln">63</span>        <span class="cls">Icon</span>(icon, color: isSelected ? <span class="kw">const</span> <span class="cls">Color</span>(0xFFD29062) : <span class="cls">Colors</span>.grey),
+<span class="ln">64</span>        <span class="cls">Text</span>(label, style: <span class="cls">TextStyle</span>(fontSize: 10, 
+<span class="ln">65</span>          color: isSelected ? <span class="kw">const</span> <span class="cls">Color</span>(0xFFD29062) : <span class="cls">Colors</span>.grey)),
+<span class="ln">66</span>      ]),
+<span class="ln">67</span>    );
+<span class="ln">68</span>  }
+<span class="ln">69</span>}
+<span class="ln">70</span>
+<span class="ln">71</span><span class="cmt">// Custom Notched Shape for BottomAppBar</span>
+<span class="ln">72</span><span class="kw">class</span> <span class="cls">CustomNotchedRectangle</span> <span class="kw">extends</span> <span class="cls">NotchedShape</span> {
+<span class="ln">73</span>  <span class="kw">const</span> <span class="cls">CustomNotchedRectangle</span>();
+<span class="ln">74</span>
+<span class="ln">75</span>  <span class="kw">@override</span>
+<span class="ln">76</span>  <span class="cls">Path</span> <span class="fn">getOuterPath</span>(<span class="cls">Rect</span> host, <span class="cls">Rect</span>? guest) {
+<span class="ln">77</span>    <span class="kw">if</span> (guest == <span class="kw">null</span>) <span class="kw">return</span> <span class="cls">Path</span>()..<span class="fn">addRect</span>(host);
+<span class="ln">78</span>
+<span class="ln">79</span>    <span class="kw">final</span> notchRadius = guest.width / 2 + 8;
+<span class="ln">80</span>    <span class="kw">final</span> s = guest.center.dx - notchRadius;
+<span class="ln">81</span>    <span class="kw">final</span> e = guest.center.dx + notchRadius;
+<span class="ln">82</span>
+<span class="ln">83</span>    <span class="kw">return</span> <span class="cls">Path</span>()
+<span class="ln">84</span>      ..<span class="fn">moveTo</span>(host.left, host.top)
+<span class="ln">85</span>      ..<span class="fn">lineTo</span>(s, host.top)
+<span class="ln">86</span>      ..<span class="fn">quadraticBezierTo</span>(guest.center.dx, guest.top + 20, e, host.top)
+<span class="ln">87</span>      ..<span class="fn">lineTo</span>(host.right, host.top)
+<span class="ln">88</span>      ..<span class="fn">lineTo</span>(host.right, host.bottom)
+<span class="ln">89</span>      ..<span class="fn">lineTo</span>(host.left, host.bottom)
+<span class="ln">90</span>      ..<span class="fn">close</span>();
+<span class="ln">91</span>  }
+<span class="ln">92</span>}</pre>
+            </div>
+        </div>
+
+        <!-- Why Riverpod Section -->
+        <div class="file" style="background: linear-gradient(135deg, #1a1a2e, #16213e); border: 2px solid #f5c2e7;">
+            <div class="file-header" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <h3 style="color: white;">❓ Tại sao chọn Riverpod thay vì BLoC?</h3>
+                <div class="path" style="color: rgba(255,255,255,0.8);">Giải thích quyết định kiến trúc State Management
+                </div>
+            </div>
+            <div class="exp" style="background: #2d2d44;">
+                <h4 style="color: #a6e3a1;">🎯 5 Lý Do Chính:</h4>
+                <ul>
+                    <li><strong>1. Ít Boilerplate Code (~70% ít hơn BLoC):</strong>
+                        <br>• Riverpod: 1 file (Provider + Notifier)
+                        <br>• BLoC: 3-4 files (Event, State, Bloc, Repository)
+                    </li>
+                    <li><strong>2. Không cần BuildContext:</strong>
+                        <br>• Riverpod truy cập state ở bất kỳ đâu (Services, Repositories)
+                        <br>• BLoC bắt buộc có BuildContext → khó dùng trong ChatService, NotificationService
+                    </li>
+                    <li><strong>3. Tự động Dispose:</strong>
+                        <br>• Riverpod tự quản lý lifecycle
+                        <br>• BLoC cần close() thủ công, dễ memory leak
+                    </li>
+                    <li><strong>4. Compile-time Safety:</strong>
+                        <br>• Phát hiện lỗi ngay khi build, không phải runtime
+                    </li>
+                    <li><strong>5. Phù hợp quy mô Project:</strong>
+                        <br>• App e-commerce vừa (~23 screens, team 4 người)
+                        <br>• BLoC phù hợp hơn cho enterprise apps lớn
+                    </li>
+                </ul>
+            </div>
+
+            <div style="padding: 15px; background: #1e1e2e;">
+                <h4 style="color: #89b4fa; margin-bottom: 10px;">📊 So sánh State Management Solutions:</h4>
+                <table style="width: 100%; border-collapse: collapse; color: #cdd6f4; font-size: 12px;">
+                    <tr style="background: #667eea;">
+                        <th style="padding: 10px; text-align: left;">Solution</th>
+                        <th style="padding: 10px;">Boilerplate</th>
+                        <th style="padding: 10px;">Learning Curve</th>
+                        <th style="padding: 10px;">Use Case</th>
+                    </tr>
+                    <tr style="background: #313244;">
+                        <td style="padding: 8px;">setState</td>
+                        <td style="padding: 8px; text-align: center;">⭐</td>
+                        <td style="padding: 8px; text-align: center;">⭐</td>
+                        <td style="padding: 8px;">Local UI state đơn giản</td>
+                    </tr>
+                    <tr style="background: #45475a;">
+                        <td style="padding: 8px;">Provider</td>
+                        <td style="padding: 8px; text-align: center;">⭐⭐</td>
+                        <td style="padding: 8px; text-align: center;">⭐⭐</td>
+                        <td style="padding: 8px;">App nhỏ</td>
+                    </tr>
+                    <tr style="background: #313244; border: 2px solid #a6e3a1;">
+                        <td style="padding: 8px;"><strong>✅ Riverpod</strong></td>
+                        <td style="padding: 8px; text-align: center;">⭐⭐</td>
+                        <td style="padding: 8px; text-align: center;">⭐⭐⭐</td>
+                        <td style="padding: 8px;"><strong>App vừa, cần flexibility</strong></td>
+                    </tr>
+                    <tr style="background: #45475a;">
+                        <td style="padding: 8px;">BLoC</td>
+                        <td style="padding: 8px; text-align: center;">⭐⭐⭐⭐⭐</td>
+                        <td style="padding: 8px; text-align: center;">⭐⭐⭐⭐</td>
+                        <td style="padding: 8px;">Enterprise, team lớn</td>
+                    </tr>
+                    <tr style="background: #313244;">
+                        <td style="padding: 8px;">GetX</td>
+                        <td style="padding: 8px; text-align: center;">⭐</td>
+                        <td style="padding: 8px; text-align: center;">⭐</td>
+                        <td style="padding: 8px;">Prototype (không khuyến khích production)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div
+                style="padding: 15px; background: linear-gradient(135deg, #43e97b, #38f9d7); border-radius: 0 0 15px 15px;">
+                <!-- <h4 style="color: #1a1a2e; margin-bottom: 8px;">💬 Câu trả lời cho Giảng viên:</h4>
+                <p style="color: #1a1a2e; font-style: italic; line-height: 1.6;">
+                    "Chúng em chọn <strong>Riverpod</strong> vì: (1) Giảm 70% boilerplate so với BLoC,
+                    (2) Dễ học và maintain cho team 4 thành viên, (3) Compile-time safety,
+                    (4) Không phụ thuộc BuildContext → dễ sử dụng trong Services như ChatService và NotificationService,
+                    (5) Phù hợp với app e-commerce quy mô vừa của project."
+                </p> -->
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Đồ Án - Lương Đức Thành (25A4041918)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 30px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .header h1 { color: #667eea; font-size: 2em; margin-bottom: 10px; }
+        .header .info { color: #666; font-size: 1.1em; }
+        .header .badge { display: inline-block; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 8px 20px; border-radius: 25px; margin-top: 15px; font-weight: bold; }
+        .section { background: white; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .section h2 { color: #764ba2; border-bottom: 3px solid #667eea; padding-bottom: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .section h2::before { content: "📁"; }
+        .file-group { background: #f8f9ff; border-radius: 10px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #667eea; }
+        .file-group h3 { color: #333; margin-bottom: 15px; font-size: 1.1em; }
+        .file-path { background: #e8eaff; padding: 8px 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #5a5a8a; margin-bottom: 10px; }
+        .logic-flow { background: white; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .logic-flow h4 { color: #667eea; margin-bottom: 10px; font-size: 0.95em; }
+        .code-line { background: #1e1e1e; color: #d4d4d4; padding: 3px 10px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.8em; margin: 5px 0; display: inline-block; }
+        .code-line .line-num { color: #858585; margin-right: 10px; }
+        .code-line .keyword { color: #569cd6; }
+        .code-line .string { color: #ce9178; }
+        .code-line .class { color: #4ec9b0; }
+        .code-line .func { color: #dcdcaa; }
+        ul { padding-left: 20px; }
+        ul li { margin: 8px 0; color: #555; line-height: 1.6; }
+        .flow-diagram { background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%); padding: 20px; border-radius: 10px; margin: 15px 0; }
+        .flow-step { display: flex; align-items: center; margin: 10px 0; }
+        .flow-step .step-num { background: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; }
+        .flow-step .step-content { flex: 1; }
+        .arrow { text-align: center; color: #667eea; font-size: 1.5em; margin: 5px 0; }
+        .summary-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 15px; margin-top: 30px; }
+        .summary-box h3 { margin-bottom: 15px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+        .stat-item { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; text-align: center; }
+        .stat-item .number { font-size: 2em; font-weight: bold; }
+        .stat-item .label { font-size: 0.9em; opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #667eea; color: white; }
+        tr:hover { background: #f8f9ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 BÁO CÁO ĐỒ ÁN MÔN HỌC</h1>
+            <p class="info"><strong>Ứng dụng:</strong> Shop Quần Áo "Mãnh Hổ Vương" - Flutter Mobile App</p>
+            <div class="badge">Thành Viên 1: LƯƠNG ĐỨC THÀNH - 25A4041918</div>
+        </div>
+
+        <div class="section">
+            <h2>Tổng Quan Nhiệm Vụ</h2>
+            <p style="margin-bottom:15px;">Phụ trách <strong>23 files</strong> bao gồm: Cấu hình Project, Hệ thống Chat & Thông báo, Giao diện User (Auth, Home, Profile).</p>
+            <div class="stats" style="background:#f8f9ff; padding:15px; border-radius:10px;">
+                <div class="stat-item" style="background:#667eea; color:white;">
+                    <div class="number">2</div><div class="label">Config Files</div>
+                </div>
+                <div class="stat-item" style="background:#764ba2; color:white;">
+                    <div class="number">3</div><div class="label">Services</div>
+                </div>
+                <div class="stat-item" style="background:#667eea; color:white;">
+                    <div class="number">3</div><div class="label">Chat Screens</div>
+                </div>
+                <div class="stat-item" style="background:#764ba2; color:white;">
+                    <div class="number">15</div><div class="label">UI Screens</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 1: Hệ thống & Cấu hình -->
+        <div class="section">
+            <h2>1. Hệ Thống & Cấu Hình (2 files)</h2>
+            
+            <div class="file-group">
+                <h3>📄 main.dart - Entry Point của ứng dụng</h3>
+                <div class="file-path">lib/main.dart (131 dòng)</div>
+                <div class="logic-flow">
+                    <h4>🔄 Luồng Logic Chính:</h4>
+                    <div class="flow-diagram">
+                        <div class="flow-step">
+                            <div class="step-num">1</div>
+                            <div class="step-content">
+                                <strong>Dòng 21-24:</strong> Khởi tạo Flutter & Firebase
+                                <div class="code-line"><span class="line-num">21:</span> <span class="keyword">void</span> <span class="func">main</span>() <span class="keyword">async</span> {</div>
+                                <div class="code-line"><span class="line-num">23:</span> <span class="keyword">await</span> Firebase.<span class="func">initializeApp</span>(options: DefaultFirebaseOptions.currentPlatform);</div>
+                            </div>
+                        </div>
+                        <div class="arrow">↓</div>
+                        <div class="flow-step">
+                            <div class="step-num">2</div>
+                            <div class="step-content">
+                                <strong>Dòng 15-19:</strong> Background Message Handler cho FCM
+                                <div class="code-line"><span class="line-num">16:</span> Future&lt;void&gt; <span class="func">_firebaseMessagingBackgroundHandler</span>(RemoteMessage message)</div>
+                            </div>
+                        </div>
+                        <div class="arrow">↓</div>
+                        <div class="flow-step">
+                            <div class="step-num">3</div>
+                            <div class="step-content">
+                                <strong>Dòng 58-109:</strong> AuthStateHandler - Điều hướng theo Role
+                                <div class="code-line"><span class="line-num">77:</span> _authSubscription = FirebaseAuth.instance.<span class="func">authStateChanges</span>().<span class="func">listen</span>((user)</div>
+                                <div class="code-line"><span class="line-num">128:</span> <span class="keyword">return</span> _userRole == <span class="string">"Admin"</span> ? AdminScreen() : UserMainScreen();</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 firebase_options.dart - Cấu hình Firebase Multi-Platform</h3>
+                <div class="file-path">lib/firebase_options.dart (89 dòng)</div>
+                <div class="logic-flow">
+                    <h4>🔄 Luồng Logic:</h4>
+                    <ul>
+                        <li><strong>Dòng 17-41:</strong> Class <code>DefaultFirebaseOptions</code> với getter <code>currentPlatform</code> tự động detect platform</li>
+                        <li><strong>Dòng 43-51:</strong> Cấu hình Web (apiKey, projectId: "do-an-food")</li>
+                        <li><strong>Dòng 53-59:</strong> Cấu hình Android</li>
+                        <li><strong>Dòng 61-68:</strong> Cấu hình iOS</li>
+                        <li><strong>Dòng 79-87:</strong> Cấu hình Windows</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: Logic Chat & Notification -->
+        <div class="section">
+            <h2>2. Logic Chat & Notification (3 files)</h2>
+            
+            <div class="file-group">
+                <h3>📄 chat_service.dart - Business Logic Chat</h3>
+                <div class="file-path">lib/Services/chat_service.dart (139 dòng)</div>
+                <div class="logic-flow">
+                    <h4>🔄 Các Method Chính:</h4>
+                    <table>
+                        <tr><th>Method</th><th>Dòng</th><th>Chức năng</th></tr>
+                        <tr><td><code>createOrUpdateChatSession()</code></td><td>10-28</td><td>Tạo/cập nhật phiên chat của User</td></tr>
+                        <tr><td><code>sendUserMessage()</code></td><td>31-54</td><td>User gửi tin nhắn → Lưu vào subcollection messages</td></tr>
+                        <tr><td><code>sendAdminMessage()</code></td><td>59-85</td><td>Admin trả lời tin nhắn (có thể attach Order info)</td></tr>
+                        <tr><td><code>markAsRead()</code></td><td>88-110</td><td>Đánh dấu tin nhắn đã đọc bằng Batch Write</td></tr>
+                        <tr><td><code>getMessages()</code></td><td>115-126</td><td>Stream realtime tin nhắn (orderBy timestamp DESC)</td></tr>
+                        <tr><td><code>getChatSessions()</code></td><td>129-137</td><td>Admin: Stream danh sách tất cả phiên chat</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 notification_service.dart - Push Notification FCM</h3>
+                <div class="file-path">lib/Services/notification_service.dart (197 dòng)</div>
+                <div class="logic-flow">
+                    <h4>🔄 Luồng Khởi Tạo (Dòng 34-115):</h4>
+                    <div class="flow-diagram">
+                        <div class="flow-step"><div class="step-num">1</div><div class="step-content"><strong>Dòng 36-47:</strong> Request Permission (alert, badge, sound)</div></div>
+                        <div class="arrow">↓</div>
+                        <div class="flow-step"><div class="step-num">2</div><div class="step-content"><strong>Dòng 50-62:</strong> Tạo Android Notification Channel (high_importance_channel)</div></div>
+                        <div class="arrow">↓</div>
+                        <div class="flow-step"><div class="step-num">3</div><div class="step-content"><strong>Dòng 79-105:</strong> Foreground Message Handler - Hiển thị Local Notification</div></div>
+                        <div class="arrow">↓</div>
+                        <div class="flow-step"><div class="step-num">4</div><div class="step-content"><strong>Dòng 121-131:</strong> Lưu FCM Token vào Firestore users collection</div></div>
+                    </div>
+                    <h4>🔄 Gửi Push (Dòng 142-183):</h4>
+                    <ul>
+                        <li><strong>Dòng 135-140:</strong> <code>_getAccessToken()</code> - Lấy OAuth2 token từ Service Account</li>
+                        <li><strong>Dòng 142-183:</strong> <code>sendPushNotification()</code> - HTTP POST tới FCM v1 API</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 chat_model.dart - Data Models</h3>
+                <div class="file-path">lib/Model/chat_model.dart (108 dòng)</div>
+                <div class="logic-flow">
+                    <h4>🔄 2 Model Classes:</h4>
+                    <ul>
+                        <li><strong>ChatMessage (Dòng 3-57):</strong> id, senderId, text, timestamp, isAdmin, isRead + Order attachment fields (orderId, orderStatus, orderTotal, productImage)</li>
+                        <li><strong>ChatSession (Dòng 60-107):</strong> userId, userName, userEmail, lastMessage, lastMessageTime, isReadByAdmin, isReadByUser, userAvatar</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: Giao diện Chat -->
+        <div class="section">
+            <h2>3. Giao Diện Chat (3 files)</h2>
+            
+            <div class="file-group">
+                <h3>📄 user_chat_screen.dart - Chat Screen cho User</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Chat/user_chat_screen.dart (283 dòng)</div>
+                <div class="logic-flow">
+                    <h4>🔄 Luồng Logic:</h4>
+                    <ul>
+                        <li><strong>Dòng 29-39:</strong> <code>initState()</code> - Lấy userId, fetch user info, gửi product info nếu có</li>
+                        <li><strong>Dòng 46-57:</strong> <code>_fetchUserInfo()</code> - Lấy thông tin user từ Firestore và init chat session</li>
+                        <li><strong>Dòng 87-193:</strong> <code>StreamBuilder</code> - Realtime messages với GroupedListView theo ngày</li>
+                        <li><strong>Dòng 108-113:</strong> Auto markAsRead khi có tin nhắn từ Admin chưa đọc</li>
+                        <li><strong>Dòng 150-184:</strong> Bubble widget hiển thị tin nhắn (parse image URL từ text)</li>
+                        <li><strong>Dòng 235-281:</strong> <code>_buildOrderAttachment()</code> - Widget hiển thị thông tin đơn hàng đính kèm</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 admin_chat_list_screen.dart - Danh sách Chat (Admin)</h3>
+                <div class="file-path">lib/View/Role_based_login/Admin/admin_chat_list_screen.dart (146 dòng)</div>
+                <div class="logic-flow">
+                    <ul>
+                        <li><strong>Dòng 32-141:</strong> StreamBuilder với <code>getChatSessions()</code> - Hiển thị danh sách khách hàng đã chat</li>
+                        <li><strong>Dòng 82-95:</strong> Red dot badge cho tin nhắn chưa đọc (<code>!session.isReadByAdmin</code>)</li>
+                        <li><strong>Dòng 126-135:</strong> Navigate tới AdminChatDetailScreen khi tap</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 admin_chat_detail_screen.dart - Chi tiết Chat (Admin)</h3>
+                <div class="file-path">lib/View/Role_based_login/Admin/admin_chat_detail_screen.dart (242 dòng)</div>
+                <div class="logic-flow">
+                    <ul>
+                        <li><strong>Dòng 27-32:</strong> <code>_sendMessage()</code> - Gọi <code>chatService.sendAdminMessage()</code></li>
+                        <li><strong>Dòng 67-72:</strong> Auto markAsRead cho tin nhắn User khi Admin xem</li>
+                        <li><strong>Dòng 74-151:</strong> GroupedListView tương tự User nhưng đảo ngược màu bubble</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: Auth Screens -->
+        <div class="section">
+            <h2>4. Giao Diện Auth (2 files)</h2>
+            
+            <div class="file-group">
+                <h3>📄 login_screen.dart - Màn hình Đăng nhập</h3>
+                <div class="file-path">lib/View/Role_based_login/User/login_screen.dart (405 dòng)</div>
+                <div class="logic-flow">
+                    <h4>🔄 Features Nổi Bật:</h4>
+                    <ul>
+                        <li><strong>Dòng 21:</strong> <code>isNight</code> state - Toggle Day/Night theme animation</li>
+                        <li><strong>Dòng 32-51:</strong> <code>login()</code> - Gọi AuthService.login(), không navigate thủ công (AuthStateHandler tự handle)</li>
+                        <li><strong>Dòng 75-160:</strong> Animated Background (Sky, Stars, Sun/Moon, Mountains) với AnimatedContainer</li>
+                        <li><strong>Dòng 381-402:</strong> <code>_buildTextField()</code> - Custom TextField với toggle password visibility</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 signup_screen.dart - Màn hình Đăng ký</h3>
+                <div class="file-path">lib/View/Role_based_login/User/signup_screen.dart (393 dòng)</div>
+                <div class="logic-flow">
+                    <ul>
+                        <li><strong>Dòng 44-97:</strong> <code>_signup()</code> - Validation đầy đủ:
+                            <ul>
+                                <li>Dòng 51: Name - chỉ chữ cái và khoảng trắng (RegExp)</li>
+                                <li>Dòng 59: Phone - 10 số, bắt đầu bằng 0</li>
+                                <li>Dòng 67: Email - format chuẩn</li>
+                            </ul>
+                        </li>
+                        <li><strong>Dòng 74-80:</strong> Gọi <code>AuthService.signup()</code> với role = "User"</li>
+                        <li><strong>Dòng 83-89:</strong> Success → SignOut → Navigate → LoginScreen</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5: Home & Browsing -->
+        <div class="section">
+            <h2>5. Giao Diện Home & Browsing (4 files)</h2>
+            
+            <div class="file-group">
+                <h3>📄 user_home_screen.dart - Trang chủ User</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Home/user_home_screen.dart (658 dòng)</div>
+                <div class="logic-flow">
+                    <ul>
+                        <li><strong>Dòng 45-104:</strong> <code>_checkNewUser()</code> - Hiển thị Welcome Dialog + Voucher cho user mới</li>
+                        <li><strong>Dòng 112-156:</strong> FloatingActionButton Chat với Badge đếm tin nhắn chưa đọc</li>
+                        <li><strong>Dòng 241-288:</strong> Order History Icon với Badge đếm đơn đang xử lý</li>
+                        <li><strong>Dòng 371-443:</strong> Banner Slider với PageView.builder + CachedNetworkImage</li>
+                        <li><strong>Dòng 467-533:</strong> "Hàng mới về" và "Bán chạy" sections với horizontal ListView</li>
+                        <li><strong>Dòng 542-655:</strong> <code>_buildProductCard()</code> - Card sản phẩm với Favorite toggle</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 user_category_screen.dart - Danh mục sản phẩm</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Category/user_category_screen.dart (240 dòng)</div>
+                <div class="logic-flow">
+                    <ul>
+                        <li><strong>Dòng 14:</strong> <code>_selectedGender</code> state - Filter theo giới tính</li>
+                        <li><strong>Dòng 80-91:</strong> Gender Cards: Nam, Nữ, Unisex</li>
+                        <li><strong>Dòng 116-123:</strong> Category Items: Áo, Quần, Váy & đầm (Nữ), Áo khoác, Set đồ, Phụ kiện</li>
+                        <li><strong>Dòng 172-237:</strong> <code>_buildCategoryItem()</code> - Navigate tới UserCategoryDetailScreen</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 user_category_detail_screen.dart - Chi tiết danh mục</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Category/user_category_detail_screen.dart (630 dòng)</div>
+                <div class="logic-flow">
+                    <ul>
+                        <li><strong>Dòng 66-148:</strong> Multi-layer Filtering: Search, Gender, Size, Color, Price Range</li>
+                        <li><strong>Dòng 151-157:</strong> Sorting: Phổ biến, Giá thấp-cao, Giá cao-thấp, Mới nhất</li>
+                        <li><strong>Dòng 336-397:</strong> Dynamic Filter Chips từ product data thực tế</li>
+                        <li><strong>Dòng 621-628:</strong> <code>_removeDiacritics()</code> - Hỗ trợ tìm kiếm tiếng Việt không dấu</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 user_product_detail_screen.dart - Chi tiết sản phẩm</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Product/user_product_detail_screen.dart (425 dòng)</div>
+                <div class="logic-flow">
+                    <ul>
+                        <li><strong>Dòng 50-93:</strong> Dynamic pricing/image/stock dựa trên variant được chọn</li>
+                        <li><strong>Dòng 95-119:</strong> <code>_validateAndAddToCart()</code> - Bắt buộc chọn Size + Color</li>
+                        <li><strong>Dòng 259-287:</strong> Size Selector với visual feedback</li>
+                        <li><strong>Dòng 294-328:</strong> Color Selector với color mapping (Dòng 32-48)</li>
+                        <li><strong>Dòng 415-421:</strong> FAB Chat - Gửi thông tin sản phẩm đang xem tới Admin</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 6: Profile -->
+        <div class="section">
+            <h2>6. Giao Diện Profile & Cá Nhân (7 files)</h2>
+            
+            <div class="file-group">
+                <h3>📄 user_profile_screen.dart - Menu Profile chính</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Profile/user_profile_screen.dart (237 dòng)</div>
+                <ul>
+                    <li><strong>Dòng 29-50:</strong> Fetch user data từ Firestore (fullName, email, phoneNumber, avatarUrl)</li>
+                    <li><strong>Dòng 52-63:</strong> <code>_logout()</code> - FirebaseAuth.signOut()</li>
+                    <li><strong>Dòng 137-203:</strong> Menu items: Thông tin cá nhân, Phương thức thanh toán, Đơn hàng, Đăng xuất</li>
+                </ul>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 user_profile_detail_screen.dart - Chỉnh sửa thông tin</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Profile/user_profile_detail_screen.dart (674 dòng)</div>
+                <ul>
+                    <li><strong>Dòng 88-127:</strong> Fetch & populate form với dữ liệu hiện tại</li>
+                    <li><strong>Dòng 143-179:</strong> <code>_saveChanges()</code> - Update Firestore với SetOptions(merge: true)</li>
+                    <li><strong>Dòng 287-305:</strong> Gender ChipChoice (Nam, Nữ, Khác, Không tiết lộ)</li>
+                    <li><strong>Dòng 486-522:</strong> City Selection BottomSheet với tìm kiếm</li>
+                    <li><strong>Dòng 525-555:</strong> Auto calculate shipping fee theo vùng miền</li>
+                </ul>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 user_order_history_screen.dart - Lịch sử đơn hàng</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Profile/user_order_history_screen.dart (289 dòng)</div>
+                <ul>
+                    <li><strong>Dòng 22:</strong> Filter statuses: Tất cả, Chờ xác nhận, Đang giao, Đã giao, Đã hủy</li>
+                    <li><strong>Dòng 44-77:</strong> <code>_cancelOrder()</code> - Xác nhận hủy + Update status</li>
+                    <li><strong>Dòng 138-282:</strong> StreamBuilder với filter theo status được chọn</li>
+                </ul>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 user_order_detail_screen.dart - Chi tiết đơn hàng</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Profile/user_order_detail_screen.dart (238 dòng)</div>
+                <ul>
+                    <li><strong>Dòng 110-127:</strong> Status Card với màu sắc theo trạng thái</li>
+                    <li><strong>Dòng 130-150:</strong> Address Card (tên, SĐT, địa chỉ, ghi chú)</li>
+                    <li><strong>Dòng 153-210:</strong> Product List với tổng tiền và phương thức thanh toán</li>
+                    <li><strong>Dòng 215-231:</strong> Cancel Button (chỉ hiển thị khi status = "Chờ xác nhận")</li>
+                </ul>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 user_payment_methods_screen.dart - Quản lý thẻ</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Profile/user_payment_methods_screen.dart (486 dòng)</div>
+                <ul>
+                    <li><strong>Dòng 22-63:</strong> <code>_showAddMethodBottomSheet()</code> - Chọn loại: Visa/Master, MoMo, COD</li>
+                    <li><strong>Dòng 65-99:</strong> <code>_showMomoDialog()</code> - Nhập SĐT MoMo</li>
+                    <li><strong>Dòng 259-318:</strong> <code>_buildWalletStack()</code> - Stack thẻ với animation focus</li>
+                    <li><strong>Dòng 320-416:</strong> <code>_buildCreditCardVisual()</code> - Card gradient với masked number</li>
+                </ul>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 add_card_screen.dart - Thêm thẻ mới</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Profile/add_card_screen.dart (596 dòng)</div>
+                <ul>
+                    <li><strong>Dòng 34-76:</strong> Animation Controllers cho flip card effect</li>
+                    <li><strong>Dòng 89-183:</strong> <code>_validateAndSave()</code> - Validate: 16 số, holder không rỗng, expiry trong tương lai, CVV 3 số</li>
+                    <li><strong>Dòng 347-444:</strong> <code>_buildCardFront()</code> - Visual card mặt trước với gradient</li>
+                    <li><strong>Dòng 446-504:</strong> <code>_buildCardBack()</code> - Mặt sau với CVV</li>
+                    <li><strong>Dòng 547-595:</strong> Custom TextInputFormatters cho card number (4-4-4-4) và date (MM/YY)</li>
+                </ul>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 card_detail_screen.dart - Chi tiết & chỉnh sửa thẻ</h3>
+                <div class="file-path">lib/View/Role_based_login/User/Profile/card_detail_screen.dart (507 dòng)</div>
+                <ul>
+                    <li><strong>Dòng 54-61:</strong> <code>_toggleCard()</code> - Flip animation</li>
+                    <li><strong>Dòng 205-232:</strong> <code>_deleteCard()</code> - Xóa thẻ khỏi Firestore</li>
+                    <li><strong>Dòng 234-305:</strong> <code>_saveChanges()</code> - Validate + Update thẻ</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SECTION 7: ViewModels -->
+        <div class="section">
+            <h2>7. ViewModels UX (2 files)</h2>
+            
+            <div class="file-group">
+                <h3>📄 navigation_provider.dart - State Management cho Navigation</h3>
+                <div class="file-path">lib/ViewModel/navigation_provider.dart (39 dòng)</div>
+                <ul>
+                    <li><strong>Dòng 3-15:</strong> <code>NavigationState</code> - Lưu currentIndex và showBackInCategory</li>
+                    <li><strong>Dòng 17-36:</strong> <code>NavigationNotifier</code> với Riverpod Notifier pattern</li>
+                    <li><strong>Dòng 23-27:</strong> <code>setIndex()</code> - Đổi tab và reset showBack</li>
+                    <li><strong>Dòng 29-35:</strong> <code>goHomeFromCategory()</code> / <code>goToCategoryFromHome()</code> - Cross-tab navigation</li>
+                </ul>
+            </div>
+
+            <div class="file-group">
+                <h3>📄 user_main_screen.dart - Wrapper Layout với Bottom Navigation</h3>
+                <div class="file-path">lib/View/Role_based_login/User/user_main_screen.dart (171 dòng)</div>
+                <ul>
+                    <li><strong>Dòng 20-26:</strong> <code>_screens</code> list: Home, Category, Cart, Wishlist, Profile</li>
+                    <li><strong>Dòng 35-38:</strong> <code>IndexedStack</code> - Giữ state của tất cả screens</li>
+                    <li><strong>Dòng 39-52:</strong> Center FAB cho Cart với dynamic color khi selected</li>
+                    <li><strong>Dòng 54-78:</strong> <code>BottomAppBar</code> với CustomNotchedRectangle</li>
+                    <li><strong>Dòng 111-169:</strong> <code>CustomNotchedRectangle</code> - Custom NotchedShape với bezier curves</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-box">
+            <h3>📊 Tổng Kết Công Việc</h3>
+            <div class="stats">
+                <div class="stat-item"><div class="number">23</div><div class="label">Total Files</div></div>
+                <div class="stat-item"><div class="number">~7,000</div><div class="label">Lines of Code</div></div>
+                <div class="stat-item"><div class="number">5</div><div class="label">Major Modules</div></div>
+                <div class="stat-item"><div class="number">100%</div><div class="label">Completed</div></div>
+            </div>
+            <p style="margin-top:20px; opacity:0.9;">
+                <strong>Modules phụ trách:</strong> Firebase Config, Chat System (Real-time), Push Notifications (FCM), 
+                Authentication UI, Home/Browsing UI, Profile Management, Payment Methods Management, Navigation State.
+            </p>
+        </div>
+
+        <p style="text-align:center; color:white; margin-top:20px; opacity:0.7;">
+            © 2024 - Báo cáo được tạo bởi Lương Đức Thành | Đồ Án Lập Trình Di Động
+        </p>
+    </div>
+</body>
+</html>

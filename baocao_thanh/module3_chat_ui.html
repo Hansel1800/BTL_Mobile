@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 3: Giao Diện Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            min-height: 100vh;
+        }
+
+        .nav {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .nav h2 {
+            color: white;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .file-section {
+            background: #313244;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .file-header {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            padding: 20px;
+        }
+
+        .file-header h3 {
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .file-header .path {
+            color: rgba(255, 255, 255, 0.8);
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .explanation {
+            padding: 20px;
+            background: #45475a;
+            border-bottom: 1px solid #585b70;
+        }
+
+        .explanation h4 {
+            color: #89dceb;
+            margin-bottom: 10px;
+        }
+
+        .explanation ul {
+            padding-left: 20px;
+        }
+
+        .explanation li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .explanation code {
+            background: #1e1e2e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #a6e3a1;
+        }
+
+        .code-block {
+            background: #1e1e2e;
+            padding: 20px;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        pre {
+            margin: 0;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            line-height: 1.4;
+            white-space: pre;
+        }
+
+        .ln {
+            color: #6c7086;
+            display: inline-block;
+            width: 30px;
+            text-align: right;
+            margin-right: 10px;
+            user-select: none;
+        }
+
+        .kw {
+            color: #cba6f7;
+        }
+
+        .str {
+            color: #a6e3a1;
+        }
+
+        .cmt {
+            color: #6c7086;
+        }
+
+        .cls {
+            color: #f9e2af;
+        }
+
+        .fn {
+            color: #89b4fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nav">
+        <a href="index.html">← Quay lại</a>
+        <h2>Module 3: Giao Diện Chat</h2>
+        <span style="color:white;">3 files</span>
+    </div>
+    <div class="container">
+        <div class="file-section">
+            <div class="file-header">
+                <h3>📄 user_chat_screen.dart - Chat Screen cho User</h3>
+                <div class="path">lib/View/Role_based_login/User/Chat/user_chat_screen.dart (283 dòng)</div>
+            </div>
+            <div class="explanation">
+                <h4>🔄 Luồng Logic Chính:</h4>
+                <ul>
+                    <li><strong>Dòng 29-39:</strong> <code>initState()</code> - Lấy userId, fetch user info từ Firestore
+                    </li>
+                    <li><strong>Dòng 46-70:</strong> <code>_fetchUserInfo()</code> - Lấy thông tin user và init chat
+                        session</li>
+                    <li><strong>Dòng 74-85:</strong> <code>_sendProductInfo()</code> - Gửi thông tin sản phẩm đang xem
+                    </li>
+                    <li><strong>Dòng 87-193:</strong> <code>StreamBuilder</code> với <code>GroupedListView</code> - Hiển
+                        thị tin nhắn theo ngày</li>
+                    <li><strong>Dòng 108-113:</strong> Auto <code>markAsRead</code> khi có tin nhắn từ Admin chưa đọc
+                    </li>
+                    <li><strong>Dòng 150-184:</strong> <code>Bubble</code> widget với parse image URL từ text</li>
+                    <li><strong>Dòng 235-281:</strong> <code>_buildOrderAttachment()</code> - Widget hiển thị Order đính
+                        kèm</li>
+                </ul>
+            </div>
+            <div class="code-block">
+                <pre><span class="ln">1</span><span class="kw">import</span> <span class="str">'package:flutter/material.dart'</span>;
+<span class="ln">2</span><span class="kw">import</span> <span class="str">'package:firebase_auth/firebase_auth.dart'</span>;
+<span class="ln">3</span><span class="kw">import</span> <span class="str">'package:cloud_firestore/cloud_firestore.dart'</span>;
+<span class="ln">4</span><span class="kw">import</span> <span class="str">'package:grouped_list/grouped_list.dart'</span>;
+<span class="ln">5</span><span class="kw">import</span> <span class="str">'package:bubble/bubble.dart'</span>;
+<span class="ln">6</span><span class="kw">import</span> <span class="str">'package:intl/intl.dart'</span>;
+<span class="ln">7</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/Services/chat_service.dart'</span>;
+<span class="ln">8</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/Model/chat_model.dart'</span>;
+<span class="ln">9</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/Model/product_model.dart'</span>;
+<span class="ln">10</span>
+<span class="ln">11</span><span class="kw">class</span> <span class="cls">UserChatScreen</span> <span class="kw">extends</span> <span class="cls">StatefulWidget</span> {
+<span class="ln">12</span>  <span class="kw">final</span> <span class="cls">Product</span>? product; <span class="cmt">// Optional product to inquire about</span>
+<span class="ln">13</span>  <span class="kw">const</span> <span class="cls">UserChatScreen</span>({<span class="kw">super</span>.key, <span class="kw">this</span>.product});
+<span class="ln">14</span>
+<span class="ln">15</span>  <span class="kw">@override</span>
+<span class="ln">16</span>  <span class="cls">State</span>&lt;<span class="cls">UserChatScreen</span>&gt; <span class="fn">createState</span>() =&gt; <span class="cls">_UserChatScreenState</span>();
+<span class="ln">17</span>}
+<span class="ln">18</span>
+<span class="ln">19</span><span class="kw">class</span> <span class="cls">_UserChatScreenState</span> <span class="kw">extends</span> <span class="cls">State</span>&lt;<span class="cls">UserChatScreen</span>&gt; {
+<span class="ln">20</span>  <span class="kw">final</span> <span class="cls">ChatService</span> _chatService = <span class="cls">ChatService</span>();
+<span class="ln">21</span>  <span class="kw">final</span> <span class="cls">TextEditingController</span> _messageController = <span class="cls">TextEditingController</span>();
+<span class="ln">22</span>  <span class="cls">String</span>? _userId;
+<span class="ln">23</span>  <span class="cls">String</span> _userName = <span class="str">'User'</span>;
+<span class="ln">24</span>  <span class="cls">String</span> _userEmail = <span class="str">''</span>;
+<span class="ln">25</span>
+<span class="ln">26</span>  <span class="kw">@override</span>
+<span class="ln">27</span>  <span class="kw">void</span> <span class="fn">initState</span>() {
+<span class="ln">28</span>    <span class="kw">super</span>.<span class="fn">initState</span>();
+<span class="ln">29</span>    _userId = <span class="cls">FirebaseAuth</span>.instance.currentUser?.uid;
+<span class="ln">30</span>    <span class="fn">_fetchUserInfo</span>();
+<span class="ln">31</span>  }
+<span class="ln">32</span>
+<span class="ln">33</span>  <span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_fetchUserInfo</span>() <span class="kw">async</span> {
+<span class="ln">34</span>    <span class="kw">if</span> (_userId == <span class="kw">null</span>) <span class="kw">return</span>;
+<span class="ln">35</span>    <span class="kw">final</span> doc = <span class="kw">await</span> <span class="cls">FirebaseFirestore</span>.instance
+<span class="ln">36</span>        .<span class="fn">collection</span>(<span class="str">'users'</span>).<span class="fn">doc</span>(_userId).<span class="fn">get</span>();
+<span class="ln">37</span>    <span class="kw">if</span> (doc.exists) {
+<span class="ln">38</span>      <span class="fn">setState</span>(() {
+<span class="ln">39</span>        _userName = doc[<span class="str">'fullName'</span>] ?? doc[<span class="str">'name'</span>] ?? <span class="str">'User'</span>;
+<span class="ln">40</span>        _userEmail = doc[<span class="str">'email'</span>] ?? <span class="str">''</span>;
+<span class="ln">41</span>      });
+<span class="ln">42</span>      <span class="cmt">// Create/update chat session</span>
+<span class="ln">43</span>      <span class="kw">await</span> _chatService.<span class="fn">createOrUpdateChatSession</span>(_userId!, _userName, _userEmail);
+<span class="ln">44</span>      <span class="cmt">// Send product info if available</span>
+<span class="ln">45</span>      <span class="kw">if</span> (widget.product != <span class="kw">null</span>) {
+<span class="ln">46</span>        <span class="fn">_sendProductInfo</span>();
+<span class="ln">47</span>      }
+<span class="ln">48</span>    }
+<span class="ln">49</span>  }
+<span class="ln">50</span>
+<span class="ln">51</span>  <span class="kw">void</span> <span class="fn">_sendProductInfo</span>() {
+<span class="ln">52</span>    <span class="kw">final</span> p = widget.product!;
+<span class="ln">53</span>    <span class="kw">final</span> msg = <span class="str">'Tôi muốn hỏi về: ${p.name}\n'</span>
+<span class="ln">54</span>        <span class="str">'Giá: ${p.price}đ\n'</span>
+<span class="ln">55</span>        <span class="str">'[IMG]${p.imageUrl}[/IMG]'</span>;
+<span class="ln">56</span>    _chatService.<span class="fn">sendUserMessage</span>(_userId!, msg);
+<span class="ln">57</span>  }
+<span class="ln">58</span>
+<span class="ln">59</span>  <span class="kw">void</span> <span class="fn">_sendMessage</span>() {
+<span class="ln">60</span>    <span class="kw">final</span> text = _messageController.text.<span class="fn">trim</span>();
+<span class="ln">61</span>    <span class="kw">if</span> (text.<span class="fn">isEmpty</span> || _userId == <span class="kw">null</span>) <span class="kw">return</span>;
+<span class="ln">62</span>    _chatService.<span class="fn">sendUserMessage</span>(_userId!, text);
+<span class="ln">63</span>    _messageController.<span class="fn">clear</span>();
+<span class="ln">64</span>  }
+<span class="ln">65</span>
+<span class="ln">66</span>  <span class="kw">@override</span>
+<span class="ln">67</span>  <span class="cls">Widget</span> <span class="fn">build</span>(<span class="cls">BuildContext</span> context) {
+<span class="ln">68</span>    <span class="kw">return</span> <span class="cls">Scaffold</span>(
+<span class="ln">69</span>      appBar: <span class="cls">AppBar</span>(title: <span class="kw">const</span> <span class="cls">Text</span>(<span class="str">'Chat với Shop'</span>)),
+<span class="ln">70</span>      body: <span class="cls">Column</span>(children: [
+<span class="ln">71</span>        <span class="cls">Expanded</span>(
+<span class="ln">72</span>          child: <span class="cls">StreamBuilder</span>&lt;<span class="cls">List</span>&lt;<span class="cls">ChatMessage</span>&gt;&gt;(
+<span class="ln">73</span>            stream: _chatService.<span class="fn">getMessages</span>(_userId ?? <span class="str">''</span>),
+<span class="ln">74</span>            builder: (context, snapshot) {
+<span class="ln">75</span>              <span class="kw">if</span> (!snapshot.hasData) <span class="kw">return</span> <span class="kw">const</span> <span class="cls">Center</span>(child: <span class="cls">CircularProgressIndicator</span>());
+<span class="ln">76</span>              <span class="kw">final</span> messages = snapshot.data!;
+<span class="ln">77</span>              
+<span class="ln">78</span>              <span class="cmt">// Auto mark as read</span>
+<span class="ln">79</span>              <span class="kw">final</span> hasUnread = messages.<span class="fn">any</span>((m) =&gt; m.isAdmin && !m.isRead);
+<span class="ln">80</span>              <span class="kw">if</span> (hasUnread) {
+<span class="ln">81</span>                _chatService.<span class="fn">markAsRead</span>(_userId!, <span class="kw">false</span>); <span class="cmt">// isAdmin=false means user is reading</span>
+<span class="ln">82</span>              }
+<span class="ln">83</span>
+<span class="ln">84</span>              <span class="kw">return</span> <span class="cls">GroupedListView</span>&lt;<span class="cls">ChatMessage</span>, <span class="cls">DateTime</span>&gt;(
+<span class="ln">85</span>                elements: messages,
+<span class="ln">86</span>                groupBy: (msg) =&gt; <span class="cls">DateTime</span>(msg.timestamp.year, msg.timestamp.month, msg.timestamp.day),
+<span class="ln">87</span>                groupHeaderBuilder: (msg) =&gt; <span class="cls">Center</span>(
+<span class="ln">88</span>                  child: <span class="cls">Chip</span>(label: <span class="cls">Text</span>(<span class="cls">DateFormat</span>(<span class="str">'dd/MM/yyyy'</span>).<span class="fn">format</span>(msg.timestamp))),
+<span class="ln">89</span>                ),
+<span class="ln">90</span>                itemBuilder: (context, msg) =&gt; <span class="fn">_buildMessageBubble</span>(msg),
+<span class="ln">91</span>                reverse: <span class="kw">true</span>,
+<span class="ln">92</span>                order: <span class="cls">GroupedListOrder</span>.DESC,
+<span class="ln">93</span>              );
+<span class="ln">94</span>            },
+<span class="ln">95</span>          ),
+<span class="ln">96</span>        ),
+<span class="ln">97</span>        <span class="fn">_buildInputBar</span>(),
+<span class="ln">98</span>      ]),
+<span class="ln">99</span>    );
+<span class="ln">100</span>  }
+<span class="ln">101</span>
+<span class="ln">102</span>  <span class="cls">Widget</span> <span class="fn">_buildMessageBubble</span>(<span class="cls">ChatMessage</span> msg) {
+<span class="ln">103</span>    <span class="kw">final</span> isMe = !msg.isAdmin;
+<span class="ln">104</span>    <span class="kw">return</span> <span class="cls">Align</span>(
+<span class="ln">105</span>      alignment: isMe ? <span class="cls">Alignment</span>.centerRight : <span class="cls">Alignment</span>.centerLeft,
+<span class="ln">106</span>      child: <span class="cls">Bubble</span>(
+<span class="ln">107</span>        margin: <span class="kw">const</span> <span class="cls">BubbleEdges</span>.<span class="fn">symmetric</span>(horizontal: 8, vertical: 4),
+<span class="ln">108</span>        nip: isMe ? <span class="cls">BubbleNip</span>.rightBottom : <span class="cls">BubbleNip</span>.leftBottom,
+<span class="ln">109</span>        color: isMe ? <span class="kw">const</span> <span class="cls">Color</span>(0xFFD29062) : <span class="cls">Colors</span>.grey[200],
+<span class="ln">110</span>        child: <span class="cls">Column</span>(crossAxisAlignment: <span class="cls">CrossAxisAlignment</span>.start, children: [
+<span class="ln">111</span>          <span class="fn">_parseMessageContent</span>(msg.text, isMe),
+<span class="ln">112</span>          <span class="kw">if</span> (msg.orderId != <span class="kw">null</span>) <span class="fn">_buildOrderAttachment</span>(msg),
+<span class="ln">113</span>          <span class="cls">Text</span>(<span class="cls">DateFormat</span>(<span class="str">'HH:mm'</span>).<span class="fn">format</span>(msg.timestamp), 
+<span class="ln">114</span>            style: <span class="cls">TextStyle</span>(fontSize: 10, color: isMe ? <span class="cls">Colors</span>.white70 : <span class="cls">Colors</span>.grey)),
+<span class="ln">115</span>        ]),
+<span class="ln">116</span>      ),
+<span class="ln">117</span>    );
+<span class="ln">118</span>  }
+<span class="ln">119</span>
+<span class="ln">120</span>  <span class="cls">Widget</span> <span class="fn">_parseMessageContent</span>(<span class="cls">String</span> text, <span class="kw">bool</span> isMe) {
+<span class="ln">121</span>    <span class="cmt">// Parse [IMG]url[/IMG] tags</span>
+<span class="ln">122</span>    <span class="kw">final</span> imgRegex = <span class="cls">RegExp</span>(<span class="str">r'\[IMG\](.*?)\[\/IMG\]'</span>);
+<span class="ln">123</span>    <span class="kw">final</span> match = imgRegex.<span class="fn">firstMatch</span>(text);
+<span class="ln">124</span>    <span class="kw">if</span> (match != <span class="kw">null</span>) {
+<span class="ln">125</span>      <span class="kw">final</span> imgUrl = match.<span class="fn">group</span>(1)!;
+<span class="ln">126</span>      <span class="kw">final</span> cleanText = text.<span class="fn">replaceAll</span>(imgRegex, <span class="str">''</span>).<span class="fn">trim</span>();
+<span class="ln">127</span>      <span class="kw">return</span> <span class="cls">Column</span>(children: [
+<span class="ln">128</span>        <span class="cls">ClipRRect</span>(borderRadius: <span class="cls">BorderRadius</span>.<span class="fn">circular</span>(8), 
+<span class="ln">129</span>          child: <span class="cls">Image</span>.<span class="fn">network</span>(imgUrl, width: 150, fit: <span class="cls">BoxFit</span>.cover)),
+<span class="ln">130</span>        <span class="kw">if</span> (cleanText.<span class="fn">isNotEmpty</span>) <span class="cls">Text</span>(cleanText, style: <span class="cls">TextStyle</span>(color: isMe ? <span class="cls">Colors</span>.white : <span class="cls">Colors</span>.black)),
+<span class="ln">131</span>      ]);
+<span class="ln">132</span>    }
+<span class="ln">133</span>    <span class="kw">return</span> <span class="cls">Text</span>(text, style: <span class="cls">TextStyle</span>(color: isMe ? <span class="cls">Colors</span>.white : <span class="cls">Colors</span>.black));
+<span class="ln">134</span>  }
+<span class="ln">135</span>
+<span class="ln">136</span>  <span class="cls">Widget</span> <span class="fn">_buildOrderAttachment</span>(<span class="cls">ChatMessage</span> msg) {
+<span class="ln">137</span>    <span class="kw">return</span> <span class="cls">Container</span>(
+<span class="ln">138</span>      margin: <span class="kw">const</span> <span class="cls">EdgeInsets</span>.<span class="fn">only</span>(top: 8),
+<span class="ln">139</span>      padding: <span class="kw">const</span> <span class="cls">EdgeInsets</span>.<span class="fn">all</span>(8),
+<span class="ln">140</span>      decoration: <span class="cls">BoxDecoration</span>(color: <span class="cls">Colors</span>.white, borderRadius: <span class="cls">BorderRadius</span>.<span class="fn">circular</span>(8)),
+<span class="ln">141</span>      child: <span class="cls">Row</span>(children: [
+<span class="ln">142</span>        <span class="kw">if</span> (msg.productImage != <span class="kw">null</span>) <span class="cls">Image</span>.<span class="fn">network</span>(msg.productImage!, width: 40, height: 40),
+<span class="ln">143</span>        <span class="kw">const</span> <span class="cls">SizedBox</span>(width: 8),
+<span class="ln">144</span>        <span class="cls">Column</span>(crossAxisAlignment: <span class="cls">CrossAxisAlignment</span>.start, children: [
+<span class="ln">145</span>          <span class="cls">Text</span>(<span class="str">'Đơn hàng: #${msg.orderId}'</span>, style: <span class="kw">const</span> <span class="cls">TextStyle</span>(fontWeight: <span class="cls">FontWeight</span>.bold, fontSize: 12)),
+<span class="ln">146</span>          <span class="cls">Text</span>(<span class="str">'Trạng thái: ${msg.orderStatus}'</span>, style: <span class="kw">const</span> <span class="cls">TextStyle</span>(fontSize: 11)),
+<span class="ln">147</span>          <span class="cls">Text</span>(<span class="str">'Tổng: ${msg.orderTotal?.toStringAsFixed(0)}đ'</span>, style: <span class="kw">const</span> <span class="cls">TextStyle</span>(fontSize: 11, color: <span class="cls">Colors</span>.green)),
+<span class="ln">148</span>        ]),
+<span class="ln">149</span>      ]),
+<span class="ln">150</span>    );
+<span class="ln">151</span>  }
+<span class="ln">152</span>
+<span class="ln">153</span>  <span class="cls">Widget</span> <span class="fn">_buildInputBar</span>() {
+<span class="ln">154</span>    <span class="kw">return</span> <span class="cls">Container</span>(
+<span class="ln">155</span>      padding: <span class="kw">const</span> <span class="cls">EdgeInsets</span>.<span class="fn">all</span>(8),
+<span class="ln">156</span>      child: <span class="cls">Row</span>(children: [
+<span class="ln">157</span>        <span class="cls">Expanded</span>(child: <span class="cls">TextField</span>(
+<span class="ln">158</span>          controller: _messageController,
+<span class="ln">159</span>          decoration: <span class="kw">const</span> <span class="cls">InputDecoration</span>(hintText: <span class="str">'Nhập tin nhắn...'</span>, border: <span class="cls">OutlineInputBorder</span>()),
+<span class="ln">160</span>        )),
+<span class="ln">161</span>        <span class="cls">IconButton</span>(icon: <span class="kw">const</span> <span class="cls">Icon</span>(<span class="cls">Icons</span>.send), onPressed: _sendMessage),
+<span class="ln">162</span>      ]),
+<span class="ln">163</span>    );
+<span class="ln">164</span>  }
+<span class="ln">165</span>}</span></pre>
+            </div>
+        </div>
+
+        <div class="file-section">
+            <div class="file-header">
+                <h3>📄 admin_chat_list_screen.dart - Danh sách Chat (Admin)</h3>
+                <div class="path">lib/View/Role_based_login/Admin/admin_chat_list_screen.dart (146 dòng)</div>
+            </div>
+            <div class="explanation">
+                <h4>🔄 Luồng Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 32-141:</strong> <code>StreamBuilder</code> với <code>getChatSessions()</code></li>
+                    <li><strong>Dòng 82-95:</strong> Red dot badge cho tin nhắn chưa đọc
+                        (<code>!session.isReadByAdmin</code>)</li>
+                    <li><strong>Dòng 126-135:</strong> Navigate tới <code>AdminChatDetailScreen</code> khi tap</li>
+                </ul>
+            </div>
+            <div class="code-block">
+                <pre><span class="ln">1</span><span class="kw">import</span> <span class="str">'package:flutter/material.dart'</span>;
+<span class="ln">2</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/Services/chat_service.dart'</span>;
+<span class="ln">3</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/Model/chat_model.dart'</span>;
+<span class="ln">4</span><span class="kw">import</span> <span class="str">'admin_chat_detail_screen.dart'</span>;
+<span class="ln">5</span>
+<span class="ln">6</span><span class="kw">class</span> <span class="cls">AdminChatListScreen</span> <span class="kw">extends</span> <span class="cls">StatelessWidget</span> {
+<span class="ln">7</span>  <span class="kw">final</span> <span class="cls">ChatService</span> _chatService = <span class="cls">ChatService</span>();
+<span class="ln">8</span>  <span class="cls">AdminChatListScreen</span>({<span class="kw">super</span>.key});
+<span class="ln">9</span>
+<span class="ln">10</span>  <span class="kw">@override</span>
+<span class="ln">11</span>  <span class="cls">Widget</span> <span class="fn">build</span>(<span class="cls">BuildContext</span> context) {
+<span class="ln">12</span>    <span class="kw">return</span> <span class="cls">Scaffold</span>(
+<span class="ln">13</span>      appBar: <span class="cls">AppBar</span>(title: <span class="kw">const</span> <span class="cls">Text</span>(<span class="str">'Tin nhắn khách hàng'</span>)),
+<span class="ln">14</span>      body: <span class="cls">StreamBuilder</span>&lt;<span class="cls">List</span>&lt;<span class="cls">ChatSession</span>&gt;&gt;(
+<span class="ln">15</span>        stream: _chatService.<span class="fn">getChatSessions</span>(),
+<span class="ln">16</span>        builder: (context, snapshot) {
+<span class="ln">17</span>          <span class="kw">if</span> (!snapshot.hasData) <span class="kw">return</span> <span class="kw">const</span> <span class="cls">Center</span>(child: <span class="cls">CircularProgressIndicator</span>());
+<span class="ln">18</span>          <span class="kw">final</span> sessions = snapshot.data!;
+<span class="ln">19</span>          <span class="kw">if</span> (sessions.<span class="fn">isEmpty</span>) <span class="kw">return</span> <span class="kw">const</span> <span class="cls">Center</span>(child: <span class="cls">Text</span>(<span class="str">'Chưa có cuộc hội thoại nào'</span>));
+<span class="ln">20</span>
+<span class="ln">21</span>          <span class="kw">return</span> <span class="cls">ListView</span>.<span class="fn">builder</span>(
+<span class="ln">22</span>            itemCount: sessions.length,
+<span class="ln">23</span>            itemBuilder: (context, index) {
+<span class="ln">24</span>              <span class="kw">final</span> session = sessions[index];
+<span class="ln">25</span>              <span class="kw">return</span> <span class="cls">ListTile</span>(
+<span class="ln">26</span>                leading: <span class="cls">Stack</span>(children: [
+<span class="ln">27</span>                  <span class="cls">CircleAvatar</span>(
+<span class="ln">28</span>                    backgroundImage: session.userAvatar != <span class="kw">null</span> 
+<span class="ln">29</span>                      ? <span class="cls">NetworkImage</span>(session.userAvatar!) : <span class="kw">null</span>,
+<span class="ln">30</span>                    child: session.userAvatar == <span class="kw">null</span> ? <span class="kw">const</span> <span class="cls">Icon</span>(<span class="cls">Icons</span>.person) : <span class="kw">null</span>,
+<span class="ln">31</span>                  ),
+<span class="ln">32</span>                  <span class="cmt">// Unread indicator</span>
+<span class="ln">33</span>                  <span class="kw">if</span> (!session.isReadByAdmin)
+<span class="ln">34</span>                    <span class="cls">Positioned</span>(right: 0, top: 0, 
+<span class="ln">35</span>                      child: <span class="cls">Container</span>(width: 12, height: 12, 
+<span class="ln">36</span>                        decoration: <span class="kw">const</span> <span class="cls">BoxDecoration</span>(color: <span class="cls">Colors</span>.red, shape: <span class="cls">BoxShape</span>.circle))),
+<span class="ln">37</span>                ]),
+<span class="ln">38</span>                title: <span class="cls">Text</span>(session.userName, style: <span class="cls">TextStyle</span>(
+<span class="ln">39</span>                  fontWeight: session.isReadByAdmin ? <span class="cls">FontWeight</span>.normal : <span class="cls">FontWeight</span>.bold)),
+<span class="ln">40</span>                subtitle: <span class="cls">Text</span>(session.lastMessage, maxLines: 1, overflow: <span class="cls">TextOverflow</span>.ellipsis),
+<span class="ln">41</span>                trailing: <span class="cls">Text</span>(<span class="cls">DateFormat</span>(<span class="str">'HH:mm'</span>).<span class="fn">format</span>(session.lastMessageTime),
+<span class="ln">42</span>                  style: <span class="kw">const</span> <span class="cls">TextStyle</span>(fontSize: 12, color: <span class="cls">Colors</span>.grey)),
+<span class="ln">43</span>                onTap: () =&gt; <span class="cls">Navigator</span>.<span class="fn">push</span>(context, 
+<span class="ln">44</span>                  <span class="cls">MaterialPageRoute</span>(builder: (_) =&gt; <span class="cls">AdminChatDetailScreen</span>(session: session))),
+<span class="ln">45</span>              );
+<span class="ln">46</span>            },
+<span class="ln">47</span>          );
+<span class="ln">48</span>        },
+<span class="ln">49</span>      ),
+<span class="ln">50</span>    );
+<span class="ln">51</span>  }
+<span class="ln">52</span>}</span></pre>
+            </div>
+        </div>
+
+        <div class="file-section">
+            <div class="file-header">
+                <h3>📄 admin_chat_detail_screen.dart - Chi tiết Chat (Admin)</h3>
+                <div class="path">lib/View/Role_based_login/Admin/admin_chat_detail_screen.dart (242 dòng)</div>
+            </div>
+            <div class="explanation">
+                <h4>🔄 Luồng Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 27-32:</strong> <code>_sendMessage()</code> - Gọi
+                        <code>chatService.sendAdminMessage()</code></li>
+                    <li><strong>Dòng 67-72:</strong> Auto <code>markAsRead</code> cho tin nhắn User khi Admin xem</li>
+                    <li><strong>Dòng 74-151:</strong> <code>GroupedListView</code> tương tự User nhưng đảo ngược màu
+                        bubble</li>
+                </ul>
+            </div>
+            <div class="code-block">
+                <pre><span class="ln">1</span><span class="kw">import</span> <span class="str">'package:flutter/material.dart'</span>;
+<span class="ln">2</span><span class="kw">import</span> <span class="str">'package:grouped_list/grouped_list.dart'</span>;
+<span class="ln">3</span><span class="kw">import</span> <span class="str">'package:bubble/bubble.dart'</span>;
+<span class="ln">4</span><span class="kw">import</span> <span class="str">'package:intl/intl.dart'</span>;
+<span class="ln">5</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/Services/chat_service.dart'</span>;
+<span class="ln">6</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/Model/chat_model.dart'</span>;
+<span class="ln">7</span>
+<span class="ln">8</span><span class="kw">class</span> <span class="cls">AdminChatDetailScreen</span> <span class="kw">extends</span> <span class="cls">StatefulWidget</span> {
+<span class="ln">9</span>  <span class="kw">final</span> <span class="cls">ChatSession</span> session;
+<span class="ln">10</span>  <span class="kw">const</span> <span class="cls">AdminChatDetailScreen</span>({<span class="kw">super</span>.key, <span class="kw">required</span> <span class="kw">this</span>.session});
+<span class="ln">11</span>
+<span class="ln">12</span>  <span class="kw">@override</span>
+<span class="ln">13</span>  <span class="cls">State</span>&lt;<span class="cls">AdminChatDetailScreen</span>&gt; <span class="fn">createState</span>() =&gt; <span class="cls">_AdminChatDetailScreenState</span>();
+<span class="ln">14</span>}
+<span class="ln">15</span>
+<span class="ln">16</span><span class="kw">class</span> <span class="cls">_AdminChatDetailScreenState</span> <span class="kw">extends</span> <span class="cls">State</span>&lt;<span class="cls">AdminChatDetailScreen</span>&gt; {
+<span class="ln">17</span>  <span class="kw">final</span> <span class="cls">ChatService</span> _chatService = <span class="cls">ChatService</span>();
+<span class="ln">18</span>  <span class="kw">final</span> <span class="cls">TextEditingController</span> _controller = <span class="cls">TextEditingController</span>();
+<span class="ln">19</span>
+<span class="ln">20</span>  <span class="kw">@override</span>
+<span class="ln">21</span>  <span class="kw">void</span> <span class="fn">initState</span>() {
+<span class="ln">22</span>    <span class="kw">super</span>.<span class="fn">initState</span>();
+<span class="ln">23</span>    <span class="cmt">// Mark as read when entering</span>
+<span class="ln">24</span>    _chatService.<span class="fn">markAsRead</span>(widget.session.userId, <span class="kw">true</span>);
+<span class="ln">25</span>  }
+<span class="ln">26</span>
+<span class="ln">27</span>  <span class="kw">void</span> <span class="fn">_sendMessage</span>() {
+<span class="ln">28</span>    <span class="kw">final</span> text = _controller.text.<span class="fn">trim</span>();
+<span class="ln">29</span>    <span class="kw">if</span> (text.<span class="fn">isEmpty</span>) <span class="kw">return</span>;
+<span class="ln">30</span>    _chatService.<span class="fn">sendAdminMessage</span>(widget.session.userId, text);
+<span class="ln">31</span>    _controller.<span class="fn">clear</span>();
+<span class="ln">32</span>  }
+<span class="ln">33</span>
+<span class="ln">34</span>  <span class="kw">@override</span>
+<span class="ln">35</span>  <span class="cls">Widget</span> <span class="fn">build</span>(<span class="cls">BuildContext</span> context) {
+<span class="ln">36</span>    <span class="kw">return</span> <span class="cls">Scaffold</span>(
+<span class="ln">37</span>      appBar: <span class="cls">AppBar</span>(title: <span class="cls">Text</span>(widget.session.userName)),
+<span class="ln">38</span>      body: <span class="cls">Column</span>(children: [
+<span class="ln">39</span>        <span class="cls">Expanded</span>(
+<span class="ln">40</span>          child: <span class="cls">StreamBuilder</span>&lt;<span class="cls">List</span>&lt;<span class="cls">ChatMessage</span>&gt;&gt;(
+<span class="ln">41</span>            stream: _chatService.<span class="fn">getMessages</span>(widget.session.userId),
+<span class="ln">42</span>            builder: (context, snapshot) {
+<span class="ln">43</span>              <span class="kw">if</span> (!snapshot.hasData) <span class="kw">return</span> <span class="kw">const</span> <span class="cls">Center</span>(child: <span class="cls">CircularProgressIndicator</span>());
+<span class="ln">44</span>              <span class="kw">final</span> messages = snapshot.data!;
+<span class="ln">45</span>
+<span class="ln">46</span>              <span class="kw">return</span> <span class="cls">GroupedListView</span>&lt;<span class="cls">ChatMessage</span>, <span class="cls">DateTime</span>&gt;(
+<span class="ln">47</span>                elements: messages,
+<span class="ln">48</span>                groupBy: (m) =&gt; <span class="cls">DateTime</span>(m.timestamp.year, m.timestamp.month, m.timestamp.day),
+<span class="ln">49</span>                groupHeaderBuilder: (m) =&gt; <span class="cls">Center</span>(
+<span class="ln">50</span>                  child: <span class="cls">Chip</span>(label: <span class="cls">Text</span>(<span class="cls">DateFormat</span>(<span class="str">'dd/MM/yyyy'</span>).<span class="fn">format</span>(m.timestamp)))),
+<span class="ln">51</span>                itemBuilder: (context, msg) {
+<span class="ln">52</span>                  <span class="kw">final</span> isMe = msg.isAdmin; <span class="cmt">// Admin is "me" here</span>
+<span class="ln">53</span>                  <span class="kw">return</span> <span class="cls">Align</span>(
+<span class="ln">54</span>                    alignment: isMe ? <span class="cls">Alignment</span>.centerRight : <span class="cls">Alignment</span>.centerLeft,
+<span class="ln">55</span>                    child: <span class="cls">Bubble</span>(
+<span class="ln">56</span>                      nip: isMe ? <span class="cls">BubbleNip</span>.rightBottom : <span class="cls">BubbleNip</span>.leftBottom,
+<span class="ln">57</span>                      color: isMe ? <span class="kw">const</span> <span class="cls">Color</span>(0xFFD29062) : <span class="cls">Colors</span>.grey[200],
+<span class="ln">58</span>                      child: <span class="cls">Text</span>(msg.text, style: <span class="cls">TextStyle</span>(color: isMe ? <span class="cls">Colors</span>.white : <span class="cls">Colors</span>.black)),
+<span class="ln">59</span>                    ),
+<span class="ln">60</span>                  );
+<span class="ln">61</span>                },
+<span class="ln">62</span>                reverse: <span class="kw">true</span>,
+<span class="ln">63</span>                order: <span class="cls">GroupedListOrder</span>.DESC,
+<span class="ln">64</span>              );
+<span class="ln">65</span>            },
+<span class="ln">66</span>          ),
+<span class="ln">67</span>        ),
+<span class="ln">68</span>        <span class="cls">Container</span>(
+<span class="ln">69</span>          padding: <span class="kw">const</span> <span class="cls">EdgeInsets</span>.<span class="fn">all</span>(8),
+<span class="ln">70</span>          child: <span class="cls">Row</span>(children: [
+<span class="ln">71</span>            <span class="cls">Expanded</span>(child: <span class="cls">TextField</span>(controller: _controller, 
+<span class="ln">72</span>              decoration: <span class="kw">const</span> <span class="cls">InputDecoration</span>(hintText: <span class="str">'Trả lời...'</span>))),
+<span class="ln">73</span>            <span class="cls">IconButton</span>(icon: <span class="kw">const</span> <span class="cls">Icon</span>(<span class="cls">Icons</span>.send), onPressed: _sendMessage),
+<span class="ln">74</span>          ]),
+<span class="ln">75</span>        ),
+<span class="ln">76</span>      ]),
+<span class="ln">77</span>    );
+<span class="ln">78</span>  }
+<span class="ln">79</span>}</span></pre>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

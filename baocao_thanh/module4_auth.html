@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 4: Giao Diện Auth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            min-height: 100vh;
+        }
+
+        .nav {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .nav h2 {
+            color: white;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .file-section {
+            background: #313244;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .file-header {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            padding: 20px;
+        }
+
+        .file-header h3 {
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .file-header .path {
+            color: rgba(255, 255, 255, 0.8);
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .explanation {
+            padding: 20px;
+            background: #45475a;
+            border-bottom: 1px solid #585b70;
+        }
+
+        .explanation h4 {
+            color: #a6e3a1;
+            margin-bottom: 10px;
+        }
+
+        .explanation ul {
+            padding-left: 20px;
+        }
+
+        .explanation li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .explanation code {
+            background: #1e1e2e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #a6e3a1;
+        }
+
+        .code-block {
+            background: #1e1e2e;
+            padding: 20px;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        pre {
+            margin: 0;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            line-height: 1.4;
+            white-space: pre;
+        }
+
+        .ln {
+            color: #6c7086;
+            display: inline-block;
+            width: 30px;
+            text-align: right;
+            margin-right: 10px;
+            user-select: none;
+        }
+
+        .kw {
+            color: #cba6f7;
+        }
+
+        .str {
+            color: #a6e3a1;
+        }
+
+        .cmt {
+            color: #6c7086;
+        }
+
+        .cls {
+            color: #f9e2af;
+        }
+
+        .fn {
+            color: #89b4fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nav">
+        <a href="index.html">← Quay lại</a>
+        <h2>Module 4: Giao Diện Auth</h2>
+        <span style="color:white;">2 files</span>
+    </div>
+    <div class="container">
+        <div class="file-section">
+            <div class="file-header">
+                <h3>📄 login_screen.dart - Màn hình Đăng nhập</h3>
+                <div class="path">lib/View/Role_based_login/User/login_screen.dart (405 dòng)</div>
+            </div>
+            <div class="explanation">
+                <h4>🔄 Features Nổi Bật:</h4>
+                <ul>
+                    <li><strong>Dòng 21:</strong> <code>isNight</code> state - Toggle Day/Night theme animation</li>
+                    <li><strong>Dòng 32-51:</strong> <code>login()</code> - Gọi AuthService.login(), AuthStateHandler tự
+                        handle navigation</li>
+                    <li><strong>Dòng 75-160:</strong> Animated Background: AnimatedContainer cho Sky, Stars, Sun/Moon,
+                        Mountains</li>
+                    <li><strong>Dòng 210-280:</strong> Login form với email/password fields</li>
+                    <li><strong>Dòng 381-402:</strong> <code>_buildTextField()</code> - Custom TextField với toggle
+                        password visibility</li>
+                </ul>
+            </div>
+            <div class="code-block">
+                <pre><span class="ln">1</span><span class="kw">import</span> <span class="str">'package:flutter/material.dart'</span>;
+<span class="ln">2</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/Services/auth_service.dart'</span>;
+<span class="ln">3</span><span class="kw">import</span> <span class="str">'signup_screen.dart'</span>;
+<span class="ln">4</span>
+<span class="ln">5</span><span class="kw">class</span> <span class="cls">LoginScreen</span> <span class="kw">extends</span> <span class="cls">StatefulWidget</span> {
+<span class="ln">6</span>  <span class="kw">const</span> <span class="cls">LoginScreen</span>({<span class="kw">super</span>.key});
+<span class="ln">7</span>  <span class="kw">@override</span>
+<span class="ln">8</span>  <span class="cls">State</span>&lt;<span class="cls">LoginScreen</span>&gt; <span class="fn">createState</span>() =&gt; <span class="cls">_LoginScreenState</span>();
+<span class="ln">9</span>}
+<span class="ln">10</span>
+<span class="ln">11</span><span class="kw">class</span> <span class="cls">_LoginScreenState</span> <span class="kw">extends</span> <span class="cls">State</span>&lt;<span class="cls">LoginScreen</span>&gt; {
+<span class="ln">12</span>  <span class="kw">final</span> <span class="cls">AuthService</span> _authService = <span class="cls">AuthService</span>();
+<span class="ln">13</span>  <span class="kw">final</span> _emailController = <span class="cls">TextEditingController</span>();
+<span class="ln">14</span>  <span class="kw">final</span> _passwordController = <span class="cls">TextEditingController</span>();
+<span class="ln">15</span>  <span class="kw">bool</span> _isLoading = <span class="kw">false</span>;
+<span class="ln">16</span>  <span class="kw">bool</span> _obscurePassword = <span class="kw">true</span>;
+<span class="ln">17</span>  <span class="kw">bool</span> isNight = <span class="kw">false</span>; <span class="cmt">// Day/Night toggle</span>
+<span class="ln">18</span>
+<span class="ln">19</span>  <span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_login</span>() <span class="kw">async</span> {
+<span class="ln">20</span>    <span class="fn">setState</span>(() =&gt; _isLoading = <span class="kw">true</span>);
+<span class="ln">21</span>    <span class="kw">try</span> {
+<span class="ln">22</span>      <span class="kw">final</span> result = <span class="kw">await</span> _authService.<span class="fn">login</span>(
+<span class="ln">23</span>        _emailController.text.<span class="fn">trim</span>(),
+<span class="ln">24</span>        _passwordController.text,
+<span class="ln">25</span>      );
+<span class="ln">26</span>      <span class="cmt">// AuthStateHandler in main.dart handles navigation automatically</span>
+<span class="ln">27</span>      <span class="kw">if</span> (result != <span class="kw">null</span> && result.<span class="fn">containsKey</span>(<span class="str">'error'</span>)) {
+<span class="ln">28</span>        <span class="cls">ScaffoldMessenger</span>.<span class="fn">of</span>(context).<span class="fn">showSnackBar</span>(
+<span class="ln">29</span>          <span class="cls">SnackBar</span>(content: <span class="cls">Text</span>(result[<span class="str">'error'</span>]), backgroundColor: <span class="cls">Colors</span>.red),
+<span class="ln">30</span>        );
+<span class="ln">31</span>      }
+<span class="ln">32</span>    } <span class="kw">finally</span> {
+<span class="ln">33</span>      <span class="kw">if</span> (mounted) <span class="fn">setState</span>(() =&gt; _isLoading = <span class="kw">false</span>);
+<span class="ln">34</span>    }
+<span class="ln">35</span>  }
+<span class="ln">36</span>
+<span class="ln">37</span>  <span class="kw">@override</span>
+<span class="ln">38</span>  <span class="cls">Widget</span> <span class="fn">build</span>(<span class="cls">BuildContext</span> context) {
+<span class="ln">39</span>    <span class="kw">return</span> <span class="cls">Scaffold</span>(
+<span class="ln">40</span>      body: <span class="cls">Stack</span>(children: [
+<span class="ln">41</span>        <span class="cmt">// Animated Sky Background</span>
+<span class="ln">42</span>        <span class="cls">AnimatedContainer</span>(
+<span class="ln">43</span>          duration: <span class="kw">const</span> <span class="cls">Duration</span>(milliseconds: 500),
+<span class="ln">44</span>          decoration: <span class="cls">BoxDecoration</span>(
+<span class="ln">45</span>            gradient: <span class="cls">LinearGradient</span>(
+<span class="ln">46</span>              begin: <span class="cls">Alignment</span>.topCenter,
+<span class="ln">47</span>              end: <span class="cls">Alignment</span>.bottomCenter,
+<span class="ln">48</span>              colors: isNight 
+<span class="ln">49</span>                ? [<span class="kw">const</span> <span class="cls">Color</span>(0xFF0D1B2A), <span class="kw">const</span> <span class="cls">Color</span>(0xFF1B263B)]
+<span class="ln">50</span>                : [<span class="kw">const</span> <span class="cls">Color</span>(0xFF87CEEB), <span class="kw">const</span> <span class="cls">Color</span>(0xFFE0F7FA)],
+<span class="ln">51</span>            ),
+<span class="ln">52</span>          ),
+<span class="ln">53</span>        ),
+<span class="ln">54</span>        
+<span class="ln">55</span>        <span class="cmt">// Stars (visible at night)</span>
+<span class="ln">56</span>        <span class="kw">if</span> (isNight) ...<span class="fn">_buildStars</span>(),
+<span class="ln">57</span>        
+<span class="ln">58</span>        <span class="cmt">// Sun or Moon</span>
+<span class="ln">59</span>        <span class="cls">Positioned</span>(
+<span class="ln">60</span>          top: 80, right: 50,
+<span class="ln">61</span>          child: <span class="cls">GestureDetector</span>(
+<span class="ln">62</span>            onTap: () =&gt; <span class="fn">setState</span>(() =&gt; isNight = !isNight),
+<span class="ln">63</span>            child: <span class="cls">AnimatedContainer</span>(
+<span class="ln">64</span>              duration: <span class="kw">const</span> <span class="cls">Duration</span>(milliseconds: 300),
+<span class="ln">65</span>              width: 60, height: 60,
+<span class="ln">66</span>              decoration: <span class="cls">BoxDecoration</span>(
+<span class="ln">67</span>                shape: <span class="cls">BoxShape</span>.circle,
+<span class="ln">68</span>                color: isNight ? <span class="cls">Colors</span>.white : <span class="cls">Colors</span>.yellow,
+<span class="ln">69</span>                boxShadow: [<span class="cls">BoxShadow</span>(
+<span class="ln">70</span>                  color: isNight ? <span class="cls">Colors</span>.white54 : <span class="cls">Colors</span>.yellow.<span class="fn">withOpacity</span>(0.5),
+<span class="ln">71</span>                  blurRadius: 30, spreadRadius: 10,
+<span class="ln">72</span>                )],
+<span class="ln">73</span>              ),
+<span class="ln">74</span>            ),
+<span class="ln">75</span>          ),
+<span class="ln">76</span>        ),
+<span class="ln">77</span>        
+<span class="ln">78</span>        <span class="cmt">// Mountains</span>
+<span class="ln">79</span>        <span class="cls">Positioned</span>(bottom: 0, left: 0, right: 0,
+<span class="ln">80</span>          child: <span class="cls">CustomPaint</span>(size: <span class="cls">Size</span>(<span class="cls">MediaQuery</span>.<span class="fn">of</span>(context).size.width, 200),
+<span class="ln">81</span>            painter: <span class="cls">MountainPainter</span>(isNight: isNight))),
+<span class="ln">82</span>        
+<span class="ln">83</span>        <span class="cmt">// Login Form</span>
+<span class="ln">84</span>        <span class="cls">Center</span>(child: <span class="cls">SingleChildScrollView</span>(padding: <span class="kw">const</span> <span class="cls">EdgeInsets</span>.<span class="fn">all</span>(24),
+<span class="ln">85</span>          child: <span class="cls">Column</span>(mainAxisAlignment: <span class="cls">MainAxisAlignment</span>.center, children: [
+<span class="ln">86</span>            <span class="cmt">// Logo</span>
+<span class="ln">87</span>            <span class="cls">Image</span>.<span class="fn">asset</span>(<span class="str">'assets/images/logo.png'</span>, height: 100),
+<span class="ln">88</span>            <span class="kw">const</span> <span class="cls">SizedBox</span>(height: 30),
+<span class="ln">89</span>            
+<span class="ln">90</span>            <span class="cmt">// Email Field</span>
+<span class="ln">91</span>            <span class="fn">_buildTextField</span>(
+<span class="ln">92</span>              controller: _emailController,
+<span class="ln">93</span>              hint: <span class="str">'Email'</span>,
+<span class="ln">94</span>              icon: <span class="cls">Icons</span>.email,
+<span class="ln">95</span>            ),
+<span class="ln">96</span>            <span class="kw">const</span> <span class="cls">SizedBox</span>(height: 16),
+<span class="ln">97</span>            
+<span class="ln">98</span>            <span class="cmt">// Password Field</span>
+<span class="ln">99</span>            <span class="fn">_buildTextField</span>(
+<span class="ln">100</span>              controller: _passwordController,
+<span class="ln">101</span>              hint: <span class="str">'Mật khẩu'</span>,
+<span class="ln">102</span>              icon: <span class="cls">Icons</span>.lock,
+<span class="ln">103</span>              isPassword: <span class="kw">true</span>,
+<span class="ln">104</span>            ),
+<span class="ln">105</span>            <span class="kw">const</span> <span class="cls">SizedBox</span>(height: 24),
+<span class="ln">106</span>            
+<span class="ln">107</span>            <span class="cmt">// Login Button</span>
+<span class="ln">108</span>            <span class="cls">SizedBox</span>(width: <span class="kw">double</span>.infinity, height: 50,
+<span class="ln">109</span>              child: <span class="cls">ElevatedButton</span>(
+<span class="ln">110</span>                onPressed: _isLoading ? <span class="kw">null</span> : _login,
+<span class="ln">111</span>                style: <span class="cls">ElevatedButton</span>.<span class="fn">styleFrom</span>(
+<span class="ln">112</span>                  backgroundColor: <span class="kw">const</span> <span class="cls">Color</span>(0xFFD29062),
+<span class="ln">113</span>                  shape: <span class="cls">RoundedRectangleBorder</span>(borderRadius: <span class="cls">BorderRadius</span>.<span class="fn">circular</span>(25)),
+<span class="ln">114</span>                ),
+<span class="ln">115</span>                child: _isLoading 
+<span class="ln">116</span>                  ? <span class="kw">const</span> <span class="cls">CircularProgressIndicator</span>(color: <span class="cls">Colors</span>.white)
+<span class="ln">117</span>                  : <span class="kw">const</span> <span class="cls">Text</span>(<span class="str">'ĐĂNG NHẬP'</span>, style: <span class="cls">TextStyle</span>(fontSize: 16, fontWeight: <span class="cls">FontWeight</span>.bold)),
+<span class="ln">118</span>              ),
+<span class="ln">119</span>            ),
+<span class="ln">120</span>            <span class="kw">const</span> <span class="cls">SizedBox</span>(height: 16),
+<span class="ln">121</span>            
+<span class="ln">122</span>            <span class="cmt">// Sign up link</span>
+<span class="ln">123</span>            <span class="cls">Row</span>(mainAxisAlignment: <span class="cls">MainAxisAlignment</span>.center, children: [
+<span class="ln">124</span>              <span class="cls">Text</span>(<span class="str">'Chưa có tài khoản? '</span>, style: <span class="cls">TextStyle</span>(color: isNight ? <span class="cls">Colors</span>.white70 : <span class="cls">Colors</span>.black54)),
+<span class="ln">125</span>              <span class="cls">GestureDetector</span>(
+<span class="ln">126</span>                onTap: () =&gt; <span class="cls">Navigator</span>.<span class="fn">push</span>(context, <span class="cls">MaterialPageRoute</span>(builder: (_) =&gt; <span class="kw">const</span> <span class="cls">SignupScreen</span>())),
+<span class="ln">127</span>                child: <span class="cls">Text</span>(<span class="str">'Đăng ký'</span>, style: <span class="cls">TextStyle</span>(color: <span class="kw">const</span> <span class="cls">Color</span>(0xFFD29062), fontWeight: <span class="cls">FontWeight</span>.bold)),
+<span class="ln">128</span>              ),
+<span class="ln">129</span>            ]),
+<span class="ln">130</span>          ]),
+<span class="ln">131</span>        )),
+<span class="ln">132</span>      ]),
+<span class="ln">133</span>    );
+<span class="ln">134</span>  }
+<span class="ln">135</span>
+<span class="ln">136</span>  <span class="cls">Widget</span> <span class="fn">_buildTextField</span>({
+<span class="ln">137</span>    <span class="kw">required</span> <span class="cls">TextEditingController</span> controller,
+<span class="ln">138</span>    <span class="kw">required</span> <span class="cls">String</span> hint,
+<span class="ln">139</span>    <span class="kw">required</span> <span class="cls">IconData</span> icon,
+<span class="ln">140</span>    <span class="kw">bool</span> isPassword = <span class="kw">false</span>,
+<span class="ln">141</span>  }) {
+<span class="ln">142</span>    <span class="kw">return</span> <span class="cls">Container</span>(
+<span class="ln">143</span>      decoration: <span class="cls">BoxDecoration</span>(
+<span class="ln">144</span>        color: <span class="cls">Colors</span>.white.<span class="fn">withOpacity</span>(0.9),
+<span class="ln">145</span>        borderRadius: <span class="cls">BorderRadius</span>.<span class="fn">circular</span>(30),
+<span class="ln">146</span>      ),
+<span class="ln">147</span>      child: <span class="cls">TextField</span>(
+<span class="ln">148</span>        controller: controller,
+<span class="ln">149</span>        obscureText: isPassword && _obscurePassword,
+<span class="ln">150</span>        decoration: <span class="cls">InputDecoration</span>(
+<span class="ln">151</span>          hintText: hint,
+<span class="ln">152</span>          prefixIcon: <span class="cls">Icon</span>(icon, color: <span class="kw">const</span> <span class="cls">Color</span>(0xFFA07048)),
+<span class="ln">153</span>          suffixIcon: isPassword ? <span class="cls">IconButton</span>(
+<span class="ln">154</span>            icon: <span class="cls">Icon</span>(_obscurePassword ? <span class="cls">Icons</span>.visibility_off : <span class="cls">Icons</span>.visibility),
+<span class="ln">155</span>            onPressed: () =&gt; <span class="fn">setState</span>(() =&gt; _obscurePassword = !_obscurePassword),
+<span class="ln">156</span>          ) : <span class="kw">null</span>,
+<span class="ln">157</span>          border: <span class="cls">InputBorder</span>.none,
+<span class="ln">158</span>          contentPadding: <span class="kw">const</span> <span class="cls">EdgeInsets</span>.<span class="fn">symmetric</span>(horizontal: 20, vertical: 16),
+<span class="ln">159</span>        ),
+<span class="ln">160</span>      ),
+<span class="ln">161</span>    );
+<span class="ln">162</span>  }
+<span class="ln">163</span>
+<span class="ln">164</span>  <span class="cls">List</span>&lt;<span class="cls">Widget</span>&gt; <span class="fn">_buildStars</span>() {
+<span class="ln">165</span>    <span class="kw">return</span> <span class="cls">List</span>.<span class="fn">generate</span>(20, (i) =&gt; <span class="cls">Positioned</span>(
+<span class="ln">166</span>      top: (i * 37) % 300, left: (i * 53) % 400,
+<span class="ln">167</span>      child: <span class="cls">Container</span>(width: 3, height: 3, 
+<span class="ln">168</span>        decoration: <span class="kw">const</span> <span class="cls">BoxDecoration</span>(color: <span class="cls">Colors</span>.white, shape: <span class="cls">BoxShape</span>.circle)),
+<span class="ln">169</span>    ));
+<span class="ln">170</span>  }
+<span class="ln">171</span>}
+<span class="ln">172</span>
+<span class="ln">173</span><span class="cmt">// Custom Painter for Mountains</span>
+<span class="ln">174</span><span class="kw">class</span> <span class="cls">MountainPainter</span> <span class="kw">extends</span> <span class="cls">CustomPainter</span> {
+<span class="ln">175</span>  <span class="kw">final</span> <span class="kw">bool</span> isNight;
+<span class="ln">176</span>  <span class="cls">MountainPainter</span>({<span class="kw">required</span> <span class="kw">this</span>.isNight});
+<span class="ln">177</span>
+<span class="ln">178</span>  <span class="kw">@override</span>
+<span class="ln">179</span>  <span class="kw">void</span> <span class="fn">paint</span>(<span class="cls">Canvas</span> canvas, <span class="cls">Size</span> size) {
+<span class="ln">180</span>    <span class="kw">final</span> paint = <span class="cls">Paint</span>()..color = isNight ? <span class="kw">const</span> <span class="cls">Color</span>(0xFF2D3748) : <span class="kw">const</span> <span class="cls">Color</span>(0xFF4A5568);
+<span class="ln">181</span>    <span class="kw">final</span> path = <span class="cls">Path</span>()
+<span class="ln">182</span>      ..<span class="fn">moveTo</span>(0, size.height)
+<span class="ln">183</span>      ..<span class="fn">lineTo</span>(size.width * 0.25, size.height * 0.4)
+<span class="ln">184</span>      ..<span class="fn">lineTo</span>(size.width * 0.5, size.height * 0.7)
+<span class="ln">185</span>      ..<span class="fn">lineTo</span>(size.width * 0.75, size.height * 0.2)
+<span class="ln">186</span>      ..<span class="fn">lineTo</span>(size.width, size.height)
+<span class="ln">187</span>      ..<span class="fn">close</span>();
+<span class="ln">188</span>    canvas.<span class="fn">drawPath</span>(path, paint);
+<span class="ln">189</span>  }
+<span class="ln">190</span>
+<span class="ln">191</span>  <span class="kw">@override</span>
+<span class="ln">192</span>  <span class="kw">bool</span> <span class="fn">shouldRepaint</span>(<span class="cls">MountainPainter</span> old) =&gt; isNight != old.isNight;
+<span class="ln">193</span>}</span></pre>
+            </div>
+        </div>
+
+        <div class="file-section">
+            <div class="file-header">
+                <h3>📄 signup_screen.dart - Màn hình Đăng ký</h3>
+                <div class="path">lib/View/Role_based_login/User/signup_screen.dart (393 dòng)</div>
+            </div>
+            <div class="explanation">
+                <h4>🔄 Luồng Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 44-97:</strong> <code>_signup()</code> - Validation đầy đủ:
+                        <ul>
+                            <li>Dòng 51: Name - chỉ chữ cái và khoảng trắng (RegExp)</li>
+                            <li>Dòng 59: Phone - 10 số, bắt đầu bằng 0</li>
+                            <li>Dòng 67: Email - format chuẩn</li>
+                        </ul>
+                    </li>
+                    <li><strong>Dòng 74-80:</strong> Gọi <code>AuthService.signup()</code> với role = "User"</li>
+                    <li><strong>Dòng 83-89:</strong> Success → SignOut → Navigate → LoginScreen</li>
+                </ul>
+            </div>
+            <div class="code-block">
+                <pre><span class="ln">1</span><span class="kw">import</span> <span class="str">'package:flutter/material.dart'</span>;
+<span class="ln">2</span><span class="kw">import</span> <span class="str">'package:firebase_auth/firebase_auth.dart'</span>;
+<span class="ln">3</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/Services/auth_service.dart'</span>;
+<span class="ln">4</span><span class="kw">import</span> <span class="str">'login_screen.dart'</span>;
+<span class="ln">5</span>
+<span class="ln">6</span><span class="kw">class</span> <span class="cls">SignupScreen</span> <span class="kw">extends</span> <span class="cls">StatefulWidget</span> {
+<span class="ln">7</span>  <span class="kw">const</span> <span class="cls">SignupScreen</span>({<span class="kw">super</span>.key});
+<span class="ln">8</span>  <span class="kw">@override</span>
+<span class="ln">9</span>  <span class="cls">State</span>&lt;<span class="cls">SignupScreen</span>&gt; <span class="fn">createState</span>() =&gt; <span class="cls">_SignupScreenState</span>();
+<span class="ln">10</span>}
+<span class="ln">11</span>
+<span class="ln">12</span><span class="kw">class</span> <span class="cls">_SignupScreenState</span> <span class="kw">extends</span> <span class="cls">State</span>&lt;<span class="cls">SignupScreen</span>&gt; {
+<span class="ln">13</span>  <span class="kw">final</span> <span class="cls">AuthService</span> _authService = <span class="cls">AuthService</span>();
+<span class="ln">14</span>  <span class="kw">final</span> _formKey = <span class="cls">GlobalKey</span>&lt;<span class="cls">FormState</span>&gt;();
+<span class="ln">15</span>  <span class="kw">final</span> _nameController = <span class="cls">TextEditingController</span>();
+<span class="ln">16</span>  <span class="kw">final</span> _phoneController = <span class="cls">TextEditingController</span>();
+<span class="ln">17</span>  <span class="kw">final</span> _emailController = <span class="cls">TextEditingController</span>();
+<span class="ln">18</span>  <span class="kw">final</span> _passwordController = <span class="cls">TextEditingController</span>();
+<span class="ln">19</span>  <span class="kw">bool</span> _isLoading = <span class="kw">false</span>;
+<span class="ln">20</span>
+<span class="ln">21</span>  <span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_signup</span>() <span class="kw">async</span> {
+<span class="ln">22</span>    <span class="kw">if</span> (!_formKey.currentState!.<span class="fn">validate</span>()) <span class="kw">return</span>;
+<span class="ln">23</span>    
+<span class="ln">24</span>    <span class="cmt">// Validation</span>
+<span class="ln">25</span>    <span class="kw">final</span> name = _nameController.text.<span class="fn">trim</span>();
+<span class="ln">26</span>    <span class="kw">final</span> phone = _phoneController.text.<span class="fn">trim</span>();
+<span class="ln">27</span>    <span class="kw">final</span> email = _emailController.text.<span class="fn">trim</span>();
+<span class="ln">28</span>    <span class="kw">final</span> password = _passwordController.text;
+<span class="ln">29</span>
+<span class="ln">30</span>    <span class="cmt">// Name validation: only letters and spaces</span>
+<span class="ln">31</span>    <span class="kw">if</span> (!<span class="cls">RegExp</span>(<span class="str">r'^[a-zA-ZÀ-ỹ\s]+$'</span>).<span class="fn">hasMatch</span>(name)) {
+<span class="ln">32</span>      <span class="fn">_showError</span>(<span class="str">'Tên chỉ được chứa chữ cái'</span>);
+<span class="ln">33</span>      <span class="kw">return</span>;
+<span class="ln">34</span>    }
+<span class="ln">35</span>
+<span class="ln">36</span>    <span class="cmt">// Phone validation: 10 digits, starts with 0</span>
+<span class="ln">37</span>    <span class="kw">if</span> (!<span class="cls">RegExp</span>(<span class="str">r'^0\d{9}$'</span>).<span class="fn">hasMatch</span>(phone)) {
+<span class="ln">38</span>      <span class="fn">_showError</span>(<span class="str">'SĐT phải có 10 số và bắt đầu bằng 0'</span>);
+<span class="ln">39</span>      <span class="kw">return</span>;
+<span class="ln">40</span>    }
+<span class="ln">41</span>
+<span class="ln">42</span>    <span class="cmt">// Email validation</span>
+<span class="ln">43</span>    <span class="kw">if</span> (!<span class="cls">RegExp</span>(<span class="str">r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$'</span>).<span class="fn">hasMatch</span>(email)) {
+<span class="ln">44</span>      <span class="fn">_showError</span>(<span class="str">'Email không hợp lệ'</span>);
+<span class="ln">45</span>      <span class="kw">return</span>;
+<span class="ln">46</span>    }
+<span class="ln">47</span>
+<span class="ln">48</span>    <span class="fn">setState</span>(() =&gt; _isLoading = <span class="kw">true</span>);
+<span class="ln">49</span>    <span class="kw">try</span> {
+<span class="ln">50</span>      <span class="cmt">// Call AuthService with role = "User"</span>
+<span class="ln">51</span>      <span class="kw">final</span> result = <span class="kw">await</span> _authService.<span class="fn">signup</span>(
+<span class="ln">52</span>        name: name,
+<span class="ln">53</span>        phone: phone,
+<span class="ln">54</span>        email: email,
+<span class="ln">55</span>        password: password,
+<span class="ln">56</span>        role: <span class="str">'User'</span>,
+<span class="ln">57</span>      );
+<span class="ln">58</span>
+<span class="ln">59</span>      <span class="kw">if</span> (result[<span class="str">'success'</span>] == <span class="kw">true</span>) {
+<span class="ln">60</span>        <span class="cmt">// Sign out and navigate to login</span>
+<span class="ln">61</span>        <span class="kw">await</span> <span class="cls">FirebaseAuth</span>.instance.<span class="fn">signOut</span>();
+<span class="ln">62</span>        <span class="kw">if</span> (mounted) {
+<span class="ln">63</span>          <span class="cls">ScaffoldMessenger</span>.<span class="fn">of</span>(context).<span class="fn">showSnackBar</span>(
+<span class="ln">64</span>            <span class="kw">const</span> <span class="cls">SnackBar</span>(content: <span class="cls">Text</span>(<span class="str">'Đăng ký thành công! Vui lòng đăng nhập.'</span>), backgroundColor: <span class="cls">Colors</span>.green),
+<span class="ln">65</span>          );
+<span class="ln">66</span>          <span class="cls">Navigator</span>.<span class="fn">pushReplacement</span>(context, <span class="cls">MaterialPageRoute</span>(builder: (_) =&gt; <span class="kw">const</span> <span class="cls">LoginScreen</span>()));
+<span class="ln">67</span>        }
+<span class="ln">68</span>      } <span class="kw">else</span> {
+<span class="ln">69</span>        <span class="fn">_showError</span>(result[<span class="str">'error'</span>] ?? <span class="str">'Đăng ký thất bại'</span>);
+<span class="ln">70</span>      }
+<span class="ln">71</span>    } <span class="kw">finally</span> {
+<span class="ln">72</span>      <span class="kw">if</span> (mounted) <span class="fn">setState</span>(() =&gt; _isLoading = <span class="kw">false</span>);
+<span class="ln">73</span>    }
+<span class="ln">74</span>  }
+<span class="ln">75</span>
+<span class="ln">76</span>  <span class="kw">void</span> <span class="fn">_showError</span>(<span class="cls">String</span> msg) {
+<span class="ln">77</span>    <span class="cls">ScaffoldMessenger</span>.<span class="fn">of</span>(context).<span class="fn">showSnackBar</span>(
+<span class="ln">78</span>      <span class="cls">SnackBar</span>(content: <span class="cls">Text</span>(msg), backgroundColor: <span class="cls">Colors</span>.red),
+<span class="ln">79</span>    );
+<span class="ln">80</span>  }
+<span class="ln">81</span>
+<span class="ln">82</span>  <span class="kw">@override</span>
+<span class="ln">83</span>  <span class="cls">Widget</span> <span class="fn">build</span>(<span class="cls">BuildContext</span> context) {
+<span class="ln">84</span>    <span class="kw">return</span> <span class="cls">Scaffold</span>(
+<span class="ln">85</span>      body: <span class="cls">Container</span>(
+<span class="ln">86</span>        decoration: <span class="kw">const</span> <span class="cls">BoxDecoration</span>(
+<span class="ln">87</span>          gradient: <span class="cls">LinearGradient</span>(
+<span class="ln">88</span>            begin: <span class="cls">Alignment</span>.topCenter, end: <span class="cls">Alignment</span>.bottomCenter,
+<span class="ln">89</span>            colors: [<span class="cls">Color</span>(0xFFD29062), <span class="cls">Color</span>(0xFFA07048)],
+<span class="ln">90</span>          ),
+<span class="ln">91</span>        ),
+<span class="ln">92</span>        child: <span class="cls">SafeArea</span>(child: <span class="cls">SingleChildScrollView</span>(padding: <span class="kw">const</span> <span class="cls">EdgeInsets</span>.<span class="fn">all</span>(24),
+<span class="ln">93</span>          child: <span class="cls">Form</span>(key: _formKey, child: <span class="cls">Column</span>(children: [
+<span class="ln">94</span>            <span class="kw">const</span> <span class="cls">Text</span>(<span class="str">'ĐĂNG KÝ'</span>, style: <span class="cls">TextStyle</span>(fontSize: 28, fontWeight: <span class="cls">FontWeight</span>.bold, color: <span class="cls">Colors</span>.white)),
+<span class="ln">95</span>            <span class="kw">const</span> <span class="cls">SizedBox</span>(height: 30),
+<span class="ln">96</span>            
+<span class="ln">97</span>            <span class="fn">_buildField</span>(_nameController, <span class="str">'Họ và tên'</span>, <span class="cls">Icons</span>.person),
+<span class="ln">98</span>            <span class="fn">_buildField</span>(_phoneController, <span class="str">'Số điện thoại'</span>, <span class="cls">Icons</span>.phone, keyboard: <span class="cls">TextInputType</span>.phone),
+<span class="ln">99</span>            <span class="fn">_buildField</span>(_emailController, <span class="str">'Email'</span>, <span class="cls">Icons</span>.email, keyboard: <span class="cls">TextInputType</span>.emailAddress),
+<span class="ln">100</span>            <span class="fn">_buildField</span>(_passwordController, <span class="str">'Mật khẩu'</span>, <span class="cls">Icons</span>.lock, isPassword: <span class="kw">true</span>),
+<span class="ln">101</span>            
+<span class="ln">102</span>            <span class="kw">const</span> <span class="cls">SizedBox</span>(height: 24),
+<span class="ln">103</span>            <span class="cls">SizedBox</span>(width: <span class="kw">double</span>.infinity, height: 50,
+<span class="ln">104</span>              child: <span class="cls">ElevatedButton</span>(
+<span class="ln">105</span>                onPressed: _isLoading ? <span class="kw">null</span> : _signup,
+<span class="ln">106</span>                style: <span class="cls">ElevatedButton</span>.<span class="fn">styleFrom</span>(backgroundColor: <span class="cls">Colors</span>.white,
+<span class="ln">107</span>                  shape: <span class="cls">RoundedRectangleBorder</span>(borderRadius: <span class="cls">BorderRadius</span>.<span class="fn">circular</span>(25))),
+<span class="ln">108</span>                child: _isLoading 
+<span class="ln">109</span>                  ? <span class="kw">const</span> <span class="cls">CircularProgressIndicator</span>()
+<span class="ln">110</span>                  : <span class="kw">const</span> <span class="cls">Text</span>(<span class="str">'ĐĂNG KÝ'</span>, style: <span class="cls">TextStyle</span>(color: <span class="cls">Color</span>(0xFFD29062), fontWeight: <span class="cls">FontWeight</span>.bold)),
+<span class="ln">111</span>              ),
+<span class="ln">112</span>            ),
+<span class="ln">113</span>            
+<span class="ln">114</span>            <span class="kw">const</span> <span class="cls">SizedBox</span>(height: 16),
+<span class="ln">115</span>            <span class="cls">Row</span>(mainAxisAlignment: <span class="cls">MainAxisAlignment</span>.center, children: [
+<span class="ln">116</span>              <span class="kw">const</span> <span class="cls">Text</span>(<span class="str">'Đã có tài khoản? '</span>, style: <span class="cls">TextStyle</span>(color: <span class="cls">Colors</span>.white70)),
+<span class="ln">117</span>              <span class="cls">GestureDetector</span>(
+<span class="ln">118</span>                onTap: () =&gt; <span class="cls">Navigator</span>.<span class="fn">pop</span>(context),
+<span class="ln">119</span>                child: <span class="kw">const</span> <span class="cls">Text</span>(<span class="str">'Đăng nhập'</span>, style: <span class="cls">TextStyle</span>(color: <span class="cls">Colors</span>.white, fontWeight: <span class="cls">FontWeight</span>.bold)),
+<span class="ln">120</span>              ),
+<span class="ln">121</span>            ]),
+<span class="ln">122</span>          ])),
+<span class="ln">123</span>        )),
+<span class="ln">124</span>      ),
+<span class="ln">125</span>    );
+<span class="ln">126</span>  }
+<span class="ln">127</span>
+<span class="ln">128</span>  <span class="cls">Widget</span> <span class="fn">_buildField</span>(<span class="cls">TextEditingController</span> ctrl, <span class="cls">String</span> hint, <span class="cls">IconData</span> icon, 
+<span class="ln">129</span>      {<span class="kw">bool</span> isPassword = <span class="kw">false</span>, <span class="cls">TextInputType</span>? keyboard}) {
+<span class="ln">130</span>    <span class="kw">return</span> <span class="cls">Padding</span>(padding: <span class="kw">const</span> <span class="cls">EdgeInsets</span>.<span class="fn">only</span>(bottom: 16),
+<span class="ln">131</span>      child: <span class="cls">TextFormField</span>(
+<span class="ln">132</span>        controller: ctrl,
+<span class="ln">133</span>        obscureText: isPassword,
+<span class="ln">134</span>        keyboardType: keyboard,
+<span class="ln">135</span>        style: <span class="kw">const</span> <span class="cls">TextStyle</span>(color: <span class="cls">Colors</span>.black87),
+<span class="ln">136</span>        decoration: <span class="cls">InputDecoration</span>(
+<span class="ln">137</span>          hintText: hint,
+<span class="ln">138</span>          prefixIcon: <span class="cls">Icon</span>(icon, color: <span class="kw">const</span> <span class="cls">Color</span>(0xFFA07048)),
+<span class="ln">139</span>          filled: <span class="kw">true</span>, fillColor: <span class="cls">Colors</span>.white,
+<span class="ln">140</span>          border: <span class="cls">OutlineInputBorder</span>(borderRadius: <span class="cls">BorderRadius</span>.<span class="fn">circular</span>(30), borderSide: <span class="cls">BorderSide</span>.none),
+<span class="ln">141</span>        ),
+<span class="ln">142</span>        validator: (v) =&gt; v == <span class="kw">null</span> || v.<span class="fn">isEmpty</span> ? <span class="str">'Vui lòng nhập $hint'</span> : <span class="kw">null</span>,
+<span class="ln">143</span>      ),
+<span class="ln">144</span>    );
+<span class="ln">145</span>  }
+<span class="ln">146</span>}</span></pre>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

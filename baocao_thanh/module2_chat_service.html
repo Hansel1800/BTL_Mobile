@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 2: Logic Chat & Notification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            min-height: 100vh;
+        }
+
+        .nav {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .nav h2 {
+            color: white;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .file-section {
+            background: #313244;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .file-header {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            padding: 20px;
+        }
+
+        .file-header h3 {
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .file-header .path {
+            color: rgba(255, 255, 255, 0.8);
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .explanation {
+            padding: 20px;
+            background: #45475a;
+            border-bottom: 1px solid #585b70;
+        }
+
+        .explanation h4 {
+            color: #f5c2e7;
+            margin-bottom: 10px;
+        }
+
+        .explanation ul {
+            padding-left: 20px;
+        }
+
+        .explanation li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .explanation code {
+            background: #1e1e2e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #a6e3a1;
+        }
+
+        .code-block {
+            background: #1e1e2e;
+            padding: 20px;
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        pre {
+            margin: 0;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: pre;
+        }
+
+        .line {
+            display: block;
+        }
+
+        .line-num {
+            color: #6c7086;
+            display: inline-block;
+            width: 35px;
+            text-align: right;
+            margin-right: 15px;
+            user-select: none;
+        }
+
+        .kw {
+            color: #cba6f7;
+        }
+
+        .str {
+            color: #a6e3a1;
+        }
+
+        .cmt {
+            color: #6c7086;
+            font-style: italic;
+        }
+
+        .cls {
+            color: #f9e2af;
+        }
+
+        .fn {
+            color: #89b4fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nav">
+        <a href="index.html">← Quay lại</a>
+        <h2>Module 2: Logic Chat & Notification</h2>
+        <span style="color:white;">3 files</span>
+    </div>
+    <div class="container">
+        <div class="file-section">
+            <div class="file-header">
+                <h3>📄 chat_service.dart - Business Logic Chat</h3>
+                <div class="path">lib/Services/chat_service.dart (139 dòng)</div>
+            </div>
+            <div class="explanation">
+                <h4>🔄 Các Method Chính:</h4>
+                <ul>
+                    <li><strong>Dòng 10-28:</strong> <code>createOrUpdateChatSession()</code> - Tạo/cập nhật phiên chat
+                        User</li>
+                    <li><strong>Dòng 31-54:</strong> <code>sendUserMessage()</code> - User gửi tin nhắn → subcollection
+                        messages</li>
+                    <li><strong>Dòng 59-85:</strong> <code>sendAdminMessage()</code> - Admin trả lời (có thể attach
+                        Order)</li>
+                    <li><strong>Dòng 88-110:</strong> <code>markAsRead()</code> - Batch write đánh dấu đã đọc</li>
+                    <li><strong>Dòng 115-137:</strong> <code>getMessages()</code> & <code>getChatSessions()</code> -
+                        Streams realtime</li>
+                </ul>
+            </div>
+            <div class="code-block">
+                <pre><span class="line"><span class="line-num">1</span><span class="kw">import</span> <span class="str">'package:cloud_firestore/cloud_firestore.dart'</span>;</span>
+<span class="line"><span class="line-num">2</span><span class="kw">import</span> <span class="str">'package:do_an_quan_ao/Model/chat_model.dart'</span>;</span>
+<span class="line"><span class="line-num">3</span></span>
+<span class="line"><span class="line-num">4</span><span class="kw">class</span> <span class="cls">ChatService</span> {</span>
+<span class="line"><span class="line-num">5</span>  <span class="kw">final</span> <span class="cls">FirebaseFirestore</span> _firestore = <span class="cls">FirebaseFirestore</span>.instance;</span>
+<span class="line"><span class="line-num">6</span></span>
+<span class="line"><span class="line-num">7</span>  <span class="cmt">// Tạo hoặc cập nhật phiên chat của user</span></span>
+<span class="line"><span class="line-num">8</span>  <span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">createOrUpdateChatSession</span>(</span>
+<span class="line"><span class="line-num">9</span>    <span class="cls">String</span> userId, <span class="cls">String</span> userName, <span class="cls">String</span> userEmail, {<span class="cls">String</span>? userAvatar}</span>
+<span class="line"><span class="line-num">10</span>  ) <span class="kw">async</span> {</span>
+<span class="line"><span class="line-num">11</span>    <span class="kw">final</span> docRef = _firestore.<span class="fn">collection</span>(<span class="str">'chats'</span>).<span class="fn">doc</span>(userId);</span>
+<span class="line"><span class="line-num">12</span>    <span class="kw">final</span> doc = <span class="kw">await</span> docRef.<span class="fn">get</span>();</span>
+<span class="line"><span class="line-num">13</span></span>
+<span class="line"><span class="line-num">14</span>    <span class="kw">if</span> (!doc.exists) {</span>
+<span class="line"><span class="line-num">15</span>      <span class="kw">await</span> docRef.<span class="fn">set</span>({</span>
+<span class="line"><span class="line-num">16</span>        <span class="str">'userId'</span>: userId,</span>
+<span class="line"><span class="line-num">17</span>        <span class="str">'userName'</span>: userName,</span>
+<span class="line"><span class="line-num">18</span>        <span class="str">'userEmail'</span>: userEmail,</span>
+<span class="line"><span class="line-num">19</span>        <span class="str">'lastMessage'</span>: <span class="str">''</span>,</span>
+<span class="line"><span class="line-num">20</span>        <span class="str">'lastMessageTime'</span>: <span class="cls">FieldValue</span>.serverTimestamp(),</span>
+<span class="line"><span class="line-num">21</span>        <span class="str">'isReadByAdmin'</span>: <span class="kw">false</span>,</span>
+<span class="line"><span class="line-num">22</span>        <span class="str">'isReadByUser'</span>: <span class="kw">true</span>,</span>
+<span class="line"><span class="line-num">23</span>        <span class="str">'userAvatar'</span>: userAvatar,</span>
+<span class="line"><span class="line-num">24</span>      });</span>
+<span class="line"><span class="line-num">25</span>    }</span>
+<span class="line"><span class="line-num">26</span>  }</span>
+<span class="line"><span class="line-num">27</span></span>
+<span class="line"><span class="line-num">28</span>  <span class="cmt">// User gửi tin nhắn</span></span>
+<span class="line"><span class="line-num">29</span>  <span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">sendUserMessage</span>(<span class="cls">String</span> userId, <span class="cls">String</span> text) <span class="kw">async</span> {</span>
+<span class="line"><span class="line-num">30</span>    <span class="kw">final</span> chatRef = _firestore.<span class="fn">collection</span>(<span class="str">'chats'</span>).<span class="fn">doc</span>(userId);</span>
+<span class="line"><span class="line-num">31</span>    </span>
+<span class="line"><span class="line-num">32</span>    <span class="cmt">// Thêm tin nhắn vào subcollection</span></span>
+<span class="line"><span class="line-num">33</span>    <span class="kw">await</span> chatRef.<span class="fn">collection</span>(<span class="str">'messages'</span>).<span class="fn">add</span>({</span>
+<span class="line"><span class="line-num">34</span>      <span class="str">'senderId'</span>: userId,</span>
+<span class="line"><span class="line-num">35</span>      <span class="str">'text'</span>: text,</span>
+<span class="line"><span class="line-num">36</span>      <span class="str">'timestamp'</span>: <span class="cls">FieldValue</span>.serverTimestamp(),</span>
+<span class="line"><span class="line-num">37</span>      <span class="str">'isAdmin'</span>: <span class="kw">false</span>,</span>
+<span class="line"><span class="line-num">38</span>      <span class="str">'isRead'</span>: <span class="kw">false</span>,</span>
+<span class="line"><span class="line-num">39</span>    });</span>
+<span class="line"><span class="line-num">40</span></span>
+<span class="line"><span class="line-num">41</span>    <span class="cmt">// Cập nhật lastMessage trong chat session</span></span>
+<span class="line"><span class="line-num">42</span>    <span class="kw">await</span> chatRef.<span class="fn">update</span>({</span>
+<span class="line"><span class="line-num">43</span>      <span class="str">'lastMessage'</span>: text,</span>
+<span class="line"><span class="line-num">44</span>      <span class="str">'lastMessageTime'</span>: <span class="cls">FieldValue</span>.serverTimestamp(),</span>
+<span class="line"><span class="line-num">45</span>      <span class="str">'isReadByAdmin'</span>: <span class="kw">false</span>,</span>
+<span class="line"><span class="line-num">46</span>    });</span>
+<span class="line"><span class="line-num">47</span>  }</span>
+<span class="line"><span class="line-num">48</span></span>
+<span class="line"><span class="line-num">49</span>  <span class="cmt">// Admin gửi tin nhắn (có thể attach order)</span></span>
+<span class="line"><span class="line-num">50</span>  <span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">sendAdminMessage</span>(<span class="cls">String</span> userId, <span class="cls">String</span> text, {</span>
+<span class="line"><span class="line-num">51</span>    <span class="cls">String</span>? orderId, <span class="cls">String</span>? orderStatus, <span class="kw">double</span>? orderTotal, <span class="cls">String</span>? productImage</span>
+<span class="line"><span class="line-num">52</span>  }) <span class="kw">async</span> {</span>
+<span class="line"><span class="line-num">53</span>    <span class="kw">final</span> chatRef = _firestore.<span class="fn">collection</span>(<span class="str">'chats'</span>).<span class="fn">doc</span>(userId);</span>
+<span class="line"><span class="line-num">54</span>    <span class="kw">final</span> msgData = {</span>
+<span class="line"><span class="line-num">55</span>      <span class="str">'senderId'</span>: <span class="str">'admin'</span>,</span>
+<span class="line"><span class="line-num">56</span>      <span class="str">'text'</span>: text,</span>
+<span class="line"><span class="line-num">57</span>      <span class="str">'timestamp'</span>: <span class="cls">FieldValue</span>.serverTimestamp(),</span>
+<span class="line"><span class="line-num">58</span>      <span class="str">'isAdmin'</span>: <span class="kw">true</span>,</span>
+<span class="line"><span class="line-num">59</span>      <span class="str">'isRead'</span>: <span class="kw">false</span>,</span>
+<span class="line"><span class="line-num">60</span>    };</span>
+<span class="line"><span class="line-num">61</span>    <span class="kw">if</span> (orderId != <span class="kw">null</span>) msgData[<span class="str">'orderId'</span>] = orderId;</span>
+<span class="line"><span class="line-num">62</span>    <span class="kw">if</span> (orderStatus != <span class="kw">null</span>) msgData[<span class="str">'orderStatus'</span>] = orderStatus;</span>
+<span class="line"><span class="line-num">63</span>    <span class="kw">if</span> (orderTotal != <span class="kw">null</span>) msgData[<span class="str">'orderTotal'</span>] = orderTotal;</span>
+<span class="line"><span class="line-num">64</span>    <span class="kw">if</span> (productImage != <span class="kw">null</span>) msgData[<span class="str">'productImage'</span>] = productImage;</span>
+<span class="line"><span class="line-num">65</span></span>
+<span class="line"><span class="line-num">66</span>    <span class="kw">await</span> chatRef.<span class="fn">collection</span>(<span class="str">'messages'</span>).<span class="fn">add</span>(msgData);</span>
+<span class="line"><span class="line-num">67</span>    <span class="kw">await</span> chatRef.<span class="fn">update</span>({</span>
+<span class="line"><span class="line-num">68</span>      <span class="str">'lastMessage'</span>: text,</span>
+<span class="line"><span class="line-num">69</span>      <span class="str">'lastMessageTime'</span>: <span class="cls">FieldValue</span>.serverTimestamp(),</span>
+<span class="line"><span class="line-num">70</span>      <span class="str">'isReadByUser'</span>: <span class="kw">false</span>,</span>
+<span class="line"><span class="line-num">71</span>    });</span>
+<span class="line"><span class="line-num">72</span>  }</span>
+<span class="line"><span class="line-num">73</span></span>
+<span class="line"><span class="line-num">74</span>  <span class="cmt">// Đánh dấu tin nhắn đã đọc</span></span>
+<span class="line"><span class="line-num">75</span>  <span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">markAsRead</span>(<span class="cls">String</span> chatId, <span class="kw">bool</span> isAdmin) <span class="kw">async</span> {</span>
+<span class="line"><span class="line-num">76</span>    <span class="kw">final</span> chatRef = _firestore.<span class="fn">collection</span>(<span class="str">'chats'</span>).<span class="fn">doc</span>(chatId);</span>
+<span class="line"><span class="line-num">77</span>    <span class="kw">await</span> chatRef.<span class="fn">update</span>({</span>
+<span class="line"><span class="line-num">78</span>      isAdmin ? <span class="str">'isReadByAdmin'</span> : <span class="str">'isReadByUser'</span>: <span class="kw">true</span>,</span>
+<span class="line"><span class="line-num">79</span>    });</span>
+<span class="line"><span class="line-num">80</span></span>
+<span class="line"><span class="line-num">81</span>    <span class="cmt">// Batch update messages</span></span>
+<span class="line"><span class="line-num">82</span>    <span class="kw">final</span> msgs = <span class="kw">await</span> chatRef.<span class="fn">collection</span>(<span class="str">'messages'</span>)</span>
+<span class="line"><span class="line-num">83</span>        .<span class="fn">where</span>(<span class="str">'isAdmin'</span>, isEqualTo: !isAdmin)</span>
+<span class="line"><span class="line-num">84</span>        .<span class="fn">where</span>(<span class="str">'isRead'</span>, isEqualTo: <span class="kw">false</span>).<span class="fn">get</span>();</span>
+<span class="line"><span class="line-num">85</span>    <span class="kw">final</span> batch = _firestore.<span class="fn">batch</span>();</span>
+<span class="line"><span class="line-num">86</span>    <span class="kw">for</span> (<span class="kw">var</span> doc <span class="kw">in</span> msgs.docs) {</span>
+<span class="line"><span class="line-num">87</span>      batch.<span class="fn">update</span>(doc.reference, {<span class="str">'isRead'</span>: <span class="kw">true</span>});</span>
+<span class="line"><span class="line-num">88</span>    }</span>
+<span class="line"><span class="line-num">89</span>    <span class="kw">await</span> batch.<span class="fn">commit</span>();</span>
+<span class="line"><span class="line-num">90</span>  }</span>
+<span class="line"><span class="line-num">91</span></span>
+<span class="line"><span class="line-num">92</span>  <span class="cmt">// Stream tin nhắn của user</span></span>
+<span class="line"><span class="line-num">93</span>  <span class="cls">Stream</span>&lt;<span class="cls">List</span>&lt;<span class="cls">ChatMessage</span>&gt;&gt; <span class="fn">getMessages</span>(<span class="cls">String</span> userId) {</span>
+<span class="line"><span class="line-num">94</span>    <span class="kw">return</span> _firestore.<span class="fn">collection</span>(<span class="str">'chats'</span>).<span class="fn">doc</span>(userId)</span>
+<span class="line"><span class="line-num">95</span>        .<span class="fn">collection</span>(<span class="str">'messages'</span>)</span>
+<span class="line"><span class="line-num">96</span>        .<span class="fn">orderBy</span>(<span class="str">'timestamp'</span>, descending: <span class="kw">true</span>)</span>
+<span class="line"><span class="line-num">97</span>        .<span class="fn">snapshots</span>()</span>
+<span class="line"><span class="line-num">98</span>        .<span class="fn">map</span>((snap) =&gt; snap.docs</span>
+<span class="line"><span class="line-num">99</span>            .<span class="fn">map</span>((doc) =&gt; <span class="cls">ChatMessage</span>.<span class="fn">fromSnapshot</span>(doc))</span>
+<span class="line"><span class="line-num">100</span>            .<span class="fn">toList</span>());</span>
+<span class="line"><span class="line-num">101</span>  }</span>
+<span class="line"><span class="line-num">102</span></span>
+<span class="line"><span class="line-num">103</span>  <span class="cmt">// Stream tất cả chat sessions (cho Admin)</span></span>
+<span class="line"><span class="line-num">104</span>  <span class="cls">Stream</span>&lt;<span class="cls">List</span>&lt;<span class="cls">ChatSession</span>&gt;&gt; <span class="fn">getChatSessions</span>() {</span>
+<span class="line"><span class="line-num">105</span>    <span class="kw">return</span> _firestore.<span class="fn">collection</span>(<span class="str">'chats'</span>)</span>
+<span class="line"><span class="line-num">106</span>        .<span class="fn">orderBy</span>(<span class="str">'lastMessageTime'</span>, descending: <span class="kw">true</span>)</span>
+<span class="line"><span class="line-num">107</span>        .<span class="fn">snapshots</span>()</span>
+<span class="line"><span class="line-num">108</span>        .<span class="fn">map</span>((snap) =&gt; snap.docs</span>
+<span class="line"><span class="line-num">109</span>            .<span class="fn">map</span>((doc) =&gt; <span class="cls">ChatSession</span>.<span class="fn">fromSnapshot</span>(doc))</span>
+<span class="line"><span class="line-num">110</span>            .<span class="fn">toList</span>());</span>
+<span class="line"><span class="line-num">111</span>  }</span>
+<span class="line"><span class="line-num">112</span>}</span></pre>
+            </div>
+        </div>
+
+        <div class="file-section">
+            <div class="file-header">
+                <h3>📄 notification_service.dart - Push Notification FCM</h3>
+                <div class="path">lib/Services/notification_service.dart (197 dòng)</div>
+            </div>
+            <div class="explanation">
+                <h4>🔄 Luồng Logic:</h4>
+                <ul>
+                    <li><strong>Dòng 34-115:</strong> <code>initialize()</code> - Request permission, tạo channel, setup
+                        handlers</li>
+                    <li><strong>Dòng 121-131:</strong> <code>_saveDeviceToken()</code> - Lưu FCM token vào Firestore
+                    </li>
+                    <li><strong>Dòng 142-183:</strong> <code>sendPushNotification()</code> - Gửi notification qua FCM
+                        HTTP v1 API</li>
+                </ul>
+            </div>
+            <div class="code-block">
+                <pre><span class="line"><span class="line-num">1</span><span class="kw">import</span> <span class="str">'dart:convert'</span>;</span>
+<span class="line"><span class="line-num">2</span><span class="kw">import</span> <span class="str">'package:cloud_firestore/cloud_firestore.dart'</span>;</span>
+<span class="line"><span class="line-num">3</span><span class="kw">import</span> <span class="str">'package:firebase_auth/firebase_auth.dart'</span>;</span>
+<span class="line"><span class="line-num">4</span><span class="kw">import</span> <span class="str">'package:firebase_messaging/firebase_messaging.dart'</span>;</span>
+<span class="line"><span class="line-num">5</span><span class="kw">import</span> <span class="str">'package:flutter_local_notifications/flutter_local_notifications.dart'</span>;</span>
+<span class="line"><span class="line-num">6</span><span class="kw">import</span> <span class="str">'package:http/http.dart'</span> <span class="kw">as</span> http;</span>
+<span class="line"><span class="line-num">7</span><span class="kw">import</span> <span class="str">'package:googleapis_auth/auth_io.dart'</span>;</span>
+<span class="line"><span class="line-num">8</span></span>
+<span class="line"><span class="line-num">9</span><span class="kw">class</span> <span class="cls">NotificationService</span> {</span>
+<span class="line"><span class="line-num">10</span>  <span class="kw">final</span> <span class="cls">FirebaseMessaging</span> _fcm = <span class="cls">FirebaseMessaging</span>.instance;</span>
+<span class="line"><span class="line-num">11</span>  <span class="kw">final</span> <span class="cls">FlutterLocalNotificationsPlugin</span> _localNotifications = </span>
+<span class="line"><span class="line-num">12</span>      <span class="cls">FlutterLocalNotificationsPlugin</span>();</span>
+<span class="line"><span class="line-num">13</span></span>
+<span class="line"><span class="line-num">14</span>  <span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">initialize</span>() <span class="kw">async</span> {</span>
+<span class="line"><span class="line-num">15</span>    <span class="cmt">// 1. Request permission</span></span>
+<span class="line"><span class="line-num">16</span>    <span class="kw">await</span> _fcm.<span class="fn">requestPermission</span>(</span>
+<span class="line"><span class="line-num">17</span>      alert: <span class="kw">true</span>, badge: <span class="kw">true</span>, sound: <span class="kw">true</span>,</span>
+<span class="line"><span class="line-num">18</span>    );</span>
+<span class="line"><span class="line-num">19</span></span>
+<span class="line"><span class="line-num">20</span>    <span class="cmt">// 2. Setup Android notification channel</span></span>
+<span class="line"><span class="line-num">21</span>    <span class="kw">const</span> <span class="cls">AndroidNotificationChannel</span> channel = <span class="cls">AndroidNotificationChannel</span>(</span>
+<span class="line"><span class="line-num">22</span>      <span class="str">'high_importance_channel'</span>,</span>
+<span class="line"><span class="line-num">23</span>      <span class="str">'High Importance Notifications'</span>,</span>
+<span class="line"><span class="line-num">24</span>      importance: <span class="cls">Importance</span>.high,</span>
+<span class="line"><span class="line-num">25</span>    );</span>
+<span class="line"><span class="line-num">26</span>    <span class="kw">await</span> _localNotifications.resolvePlatformSpecificImplementation</span>
+<span class="line"><span class="line-num">27</span>        &lt;<span class="cls">AndroidFlutterLocalNotificationsPlugin</span>&gt;()</span>
+<span class="line"><span class="line-num">28</span>        ?.<span class="fn">createNotificationChannel</span>(channel);</span>
+<span class="line"><span class="line-num">29</span></span>
+<span class="line"><span class="line-num">30</span>    <span class="cmt">// 3. Initialize local notifications</span></span>
+<span class="line"><span class="line-num">31</span>    <span class="kw">const</span> initSettings = <span class="cls">InitializationSettings</span>(</span>
+<span class="line"><span class="line-num">32</span>      android: <span class="cls">AndroidInitializationSettings</span>(<span class="str">'@mipmap/ic_launcher'</span>),</span>
+<span class="line"><span class="line-num">33</span>      iOS: <span class="cls">DarwinInitializationSettings</span>(),</span>
+<span class="line"><span class="line-num">34</span>    );</span>
+<span class="line"><span class="line-num">35</span>    <span class="kw">await</span> _localNotifications.<span class="fn">initialize</span>(initSettings);</span>
+<span class="line"><span class="line-num">36</span></span>
+<span class="line"><span class="line-num">37</span>    <span class="cmt">// 4. Handle foreground messages</span></span>
+<span class="line"><span class="line-num">38</span>    <span class="cls">FirebaseMessaging</span>.<span class="fn">onMessage</span>.<span class="fn">listen</span>((message) {</span>
+<span class="line"><span class="line-num">39</span>      <span class="kw">final</span> notification = message.notification;</span>
+<span class="line"><span class="line-num">40</span>      <span class="kw">if</span> (notification != <span class="kw">null</span>) {</span>
+<span class="line"><span class="line-num">41</span>        _localNotifications.<span class="fn">show</span>(</span>
+<span class="line"><span class="line-num">42</span>          notification.<span class="fn">hashCode</span>,</span>
+<span class="line"><span class="line-num">43</span>          notification.title,</span>
+<span class="line"><span class="line-num">44</span>          notification.body,</span>
+<span class="line"><span class="line-num">45</span>          <span class="kw">const</span> <span class="cls">NotificationDetails</span>(</span>
+<span class="line"><span class="line-num">46</span>            android: <span class="cls">AndroidNotificationDetails</span>(</span>
+<span class="line"><span class="line-num">47</span>              <span class="str">'high_importance_channel'</span>,</span>
+<span class="line"><span class="line-num">48</span>              <span class="str">'High Importance Notifications'</span>,</span>
+<span class="line"><span class="line-num">49</span>              importance: <span class="cls">Importance</span>.high,</span>
+<span class="line"><span class="line-num">50</span>              priority: <span class="cls">Priority</span>.high,</span>
+<span class="line"><span class="line-num">51</span>            ),</span>
+<span class="line"><span class="line-num">52</span>          ),</span>
+<span class="line"><span class="line-num">53</span>        );</span>
+<span class="line"><span class="line-num">54</span>      }</span>
+<span class="line"><span class="line-num">55</span>    });</span>
+<span class="line"><span class="line-num">56</span></span>
+<span class="line"><span class="line-num">57</span>    <span class="cmt">// 5. Save device token</span></span>
+<span class="line"><span class="line-num">58</span>    <span class="kw">await</span> <span class="fn">_saveDeviceToken</span>();</span>
+<span class="line"><span class="line-num">59</span>  }</span>
+<span class="line"><span class="line-num">60</span></span>
+<span class="line"><span class="line-num">61</span>  <span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_saveDeviceToken</span>() <span class="kw">async</span> {</span>
+<span class="line"><span class="line-num">62</span>    <span class="kw">final</span> user = <span class="cls">FirebaseAuth</span>.instance.currentUser;</span>
+<span class="line"><span class="line-num">63</span>    <span class="kw">if</span> (user == <span class="kw">null</span>) <span class="kw">return</span>;</span>
+<span class="line"><span class="line-num">64</span>    </span>
+<span class="line"><span class="line-num">65</span>    <span class="kw">final</span> token = <span class="kw">await</span> _fcm.<span class="fn">getToken</span>();</span>
+<span class="line"><span class="line-num">66</span>    <span class="kw">if</span> (token != <span class="kw">null</span>) {</span>
+<span class="line"><span class="line-num">67</span>      <span class="kw">await</span> <span class="cls">FirebaseFirestore</span>.instance</span>
+<span class="line"><span class="line-num">68</span>          .<span class="fn">collection</span>(<span class="str">'users'</span>)</span>
+<span class="line"><span class="line-num">69</span>          .<span class="fn">doc</span>(user.uid)</span>
+<span class="line"><span class="line-num">70</span>          .<span class="fn">update</span>({<span class="str">'fcmToken'</span>: token});</span>
+<span class="line"><span class="line-num">71</span>    }</span>
+<span class="line"><span class="line-num">72</span>  }</span>
+<span class="line"><span class="line-num">73</span></span>
+<span class="line"><span class="line-num">74</span>  <span class="cmt">// Gửi push notification từ Admin</span></span>
+<span class="line"><span class="line-num">75</span>  <span class="cls">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">sendPushNotification</span>(<span class="cls">String</span> token, <span class="cls">String</span> title, <span class="cls">String</span> body) <span class="kw">async</span> {</span>
+<span class="line"><span class="line-num">76</span>    <span class="kw">final</span> accessToken = <span class="kw">await</span> <span class="fn">_getAccessToken</span>();</span>
+<span class="line"><span class="line-num">77</span>    </span>
+<span class="line"><span class="line-num">78</span>    <span class="kw">await</span> http.<span class="fn">post</span>(</span>
+<span class="line"><span class="line-num">79</span>      <span class="cls">Uri</span>.<span class="fn">parse</span>(<span class="str">'https://fcm.googleapis.com/v1/projects/do-an-food/messages:send'</span>),</span>
+<span class="line"><span class="line-num">80</span>      headers: {</span>
+<span class="line"><span class="line-num">81</span>        <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>,</span>
+<span class="line"><span class="line-num">82</span>        <span class="str">'Authorization'</span>: <span class="str">'Bearer $accessToken'</span>,</span>
+<span class="line"><span class="line-num">83</span>      },</span>
+<span class="line"><span class="line-num">84</span>      body: <span class="fn">jsonEncode</span>({</span>
+<span class="line"><span class="line-num">85</span>        <span class="str">'message'</span>: {</span>
+<span class="line"><span class="line-num">86</span>          <span class="str">'token'</span>: token,</span>
+<span class="line"><span class="line-num">87</span>          <span class="str">'notification'</span>: {<span class="str">'title'</span>: title, <span class="str">'body'</span>: body},</span>
+<span class="line"><span class="line-num">88</span>        }}</span>
+<span class="line"><span class="line-num">89</span>      ),</span>
+<span class="line"><span class="line-num">90</span>    );</span>
+<span class="line"><span class="line-num">91</span>  }</span>
+<span class="line"><span class="line-num">92</span>}</span></pre>
+            </div>
+        </div>
+
+        <div class="file-section">
+            <div class="file-header">
+                <h3>📄 chat_model.dart - Data Models</h3>
+                <div class="path">lib/Model/chat_model.dart (108 dòng)</div>
+            </div>
+            <div class="explanation">
+                <h4>🔄 2 Model Classes:</h4>
+                <ul>
+                    <li><strong>ChatMessage:</strong> id, senderId, text, timestamp, isAdmin, isRead + Order attachment
+                    </li>
+                    <li><strong>ChatSession:</strong> userId, userName, lastMessage, isReadByAdmin, isReadByUser</li>
+                </ul>
+            </div>
+            <div class="code-block">
+                <pre><span class="line"><span class="line-num">1</span><span class="kw">import</span> <span class="str">'package:cloud_firestore/cloud_firestore.dart'</span>;</span>
+<span class="line"><span class="line-num">2</span></span>
+<span class="line"><span class="line-num">3</span><span class="kw">class</span> <span class="cls">ChatMessage</span> {</span>
+<span class="line"><span class="line-num">4</span>  <span class="kw">final</span> <span class="cls">String</span> id;</span>
+<span class="line"><span class="line-num">5</span>  <span class="kw">final</span> <span class="cls">String</span> senderId;</span>
+<span class="line"><span class="line-num">6</span>  <span class="kw">final</span> <span class="cls">String</span> text;</span>
+<span class="line"><span class="line-num">7</span>  <span class="kw">final</span> <span class="cls">DateTime</span> timestamp;</span>
+<span class="line"><span class="line-num">8</span>  <span class="kw">final</span> <span class="kw">bool</span> isAdmin;</span>
+<span class="line"><span class="line-num">9</span>  <span class="kw">final</span> <span class="kw">bool</span> isRead;</span>
+<span class="line"><span class="line-num">10</span>  <span class="cmt">// Order attachment fields</span></span>
+<span class="line"><span class="line-num">11</span>  <span class="kw">final</span> <span class="cls">String</span>? orderId;</span>
+<span class="line"><span class="line-num">12</span>  <span class="kw">final</span> <span class="cls">String</span>? orderStatus;</span>
+<span class="line"><span class="line-num">13</span>  <span class="kw">final</span> <span class="kw">double</span>? orderTotal;</span>
+<span class="line"><span class="line-num">14</span>  <span class="kw">final</span> <span class="cls">String</span>? productImage;</span>
+<span class="line"><span class="line-num">15</span></span>
+<span class="line"><span class="line-num">16</span>  <span class="cls">ChatMessage</span>({</span>
+<span class="line"><span class="line-num">17</span>    <span class="kw">required</span> <span class="kw">this</span>.id,</span>
+<span class="line"><span class="line-num">18</span>    <span class="kw">required</span> <span class="kw">this</span>.senderId,</span>
+<span class="line"><span class="line-num">19</span>    <span class="kw">required</span> <span class="kw">this</span>.text,</span>
+<span class="line"><span class="line-num">20</span>    <span class="kw">required</span> <span class="kw">this</span>.timestamp,</span>
+<span class="line"><span class="line-num">21</span>    <span class="kw">required</span> <span class="kw">this</span>.isAdmin,</span>
+<span class="line"><span class="line-num">22</span>    <span class="kw">required</span> <span class="kw">this</span>.isRead,</span>
+<span class="line"><span class="line-num">23</span>    <span class="kw">this</span>.orderId, <span class="kw">this</span>.orderStatus, <span class="kw">this</span>.orderTotal, <span class="kw">this</span>.productImage,</span>
+<span class="line"><span class="line-num">24</span>  });</span>
+<span class="line"><span class="line-num">25</span></span>
+<span class="line"><span class="line-num">26</span>  <span class="kw">factory</span> <span class="cls">ChatMessage</span>.<span class="fn">fromSnapshot</span>(<span class="cls">DocumentSnapshot</span> doc) {</span>
+<span class="line"><span class="line-num">27</span>    <span class="kw">final</span> data = doc.data() <span class="kw">as</span> <span class="cls">Map</span>&lt;<span class="cls">String</span>, <span class="kw">dynamic</span>&gt;;</span>
+<span class="line"><span class="line-num">28</span>    <span class="kw">return</span> <span class="cls">ChatMessage</span>(</span>
+<span class="line"><span class="line-num">29</span>      id: doc.id,</span>
+<span class="line"><span class="line-num">30</span>      senderId: data[<span class="str">'senderId'</span>] ?? <span class="str">''</span>,</span>
+<span class="line"><span class="line-num">31</span>      text: data[<span class="str">'text'</span>] ?? <span class="str">''</span>,</span>
+<span class="line"><span class="line-num">32</span>      timestamp: (data[<span class="str">'timestamp'</span>] <span class="kw">as</span> <span class="cls">Timestamp</span>?)?.toDate() ?? <span class="cls">DateTime</span>.now(),</span>
+<span class="line"><span class="line-num">33</span>      isAdmin: data[<span class="str">'isAdmin'</span>] ?? <span class="kw">false</span>,</span>
+<span class="line"><span class="line-num">34</span>      isRead: data[<span class="str">'isRead'</span>] ?? <span class="kw">false</span>,</span>
+<span class="line"><span class="line-num">35</span>      orderId: data[<span class="str">'orderId'</span>],</span>
+<span class="line"><span class="line-num">36</span>      orderStatus: data[<span class="str">'orderStatus'</span>],</span>
+<span class="line"><span class="line-num">37</span>      orderTotal: (data[<span class="str">'orderTotal'</span>] <span class="kw">as</span> num?)?.toDouble(),</span>
+<span class="line"><span class="line-num">38</span>      productImage: data[<span class="str">'productImage'</span>],</span>
+<span class="line"><span class="line-num">39</span>    );</span>
+<span class="line"><span class="line-num">40</span>  }</span>
+<span class="line"><span class="line-num">41</span>}</span>
+<span class="line"><span class="line-num">42</span></span>
+<span class="line"><span class="line-num">43</span><span class="kw">class</span> <span class="cls">ChatSession</span> {</span>
+<span class="line"><span class="line-num">44</span>  <span class="kw">final</span> <span class="cls">String</span> userId;</span>
+<span class="line"><span class="line-num">45</span>  <span class="kw">final</span> <span class="cls">String</span> userName;</span>
+<span class="line"><span class="line-num">46</span>  <span class="kw">final</span> <span class="cls">String</span> userEmail;</span>
+<span class="line"><span class="line-num">47</span>  <span class="kw">final</span> <span class="cls">String</span> lastMessage;</span>
+<span class="line"><span class="line-num">48</span>  <span class="kw">final</span> <span class="cls">DateTime</span> lastMessageTime;</span>
+<span class="line"><span class="line-num">49</span>  <span class="kw">final</span> <span class="kw">bool</span> isReadByAdmin;</span>
+<span class="line"><span class="line-num">50</span>  <span class="kw">final</span> <span class="kw">bool</span> isReadByUser;</span>
+<span class="line"><span class="line-num">51</span>  <span class="kw">final</span> <span class="cls">String</span>? userAvatar;</span>
+<span class="line"><span class="line-num">52</span></span>
+<span class="line"><span class="line-num">53</span>  <span class="cls">ChatSession</span>({</span>
+<span class="line"><span class="line-num">54</span>    <span class="kw">required</span> <span class="kw">this</span>.userId,</span>
+<span class="line"><span class="line-num">55</span>    <span class="kw">required</span> <span class="kw">this</span>.userName,</span>
+<span class="line"><span class="line-num">56</span>    <span class="kw">required</span> <span class="kw">this</span>.userEmail,</span>
+<span class="line"><span class="line-num">57</span>    <span class="kw">required</span> <span class="kw">this</span>.lastMessage,</span>
+<span class="line"><span class="line-num">58</span>    <span class="kw">required</span> <span class="kw">this</span>.lastMessageTime,</span>
+<span class="line"><span class="line-num">59</span>    <span class="kw">required</span> <span class="kw">this</span>.isReadByAdmin,</span>
+<span class="line"><span class="line-num">60</span>    <span class="kw">required</span> <span class="kw">this</span>.isReadByUser,</span>
+<span class="line"><span class="line-num">61</span>    <span class="kw">this</span>.userAvatar,</span>
+<span class="line"><span class="line-num">62</span>  });</span>
+<span class="line"><span class="line-num">63</span></span>
+<span class="line"><span class="line-num">64</span>  <span class="kw">factory</span> <span class="cls">ChatSession</span>.<span class="fn">fromSnapshot</span>(<span class="cls">DocumentSnapshot</span> doc) {</span>
+<span class="line"><span class="line-num">65</span>    <span class="kw">final</span> data = doc.data() <span class="kw">as</span> <span class="cls">Map</span>&lt;<span class="cls">String</span>, <span class="kw">dynamic</span>&gt;;</span>
+<span class="line"><span class="line-num">66</span>    <span class="kw">return</span> <span class="cls">ChatSession</span>(</span>
+<span class="line"><span class="line-num">67</span>      userId: doc.id,</span>
+<span class="line"><span class="line-num">68</span>      userName: data[<span class="str">'userName'</span>] ?? <span class="str">'Unknown'</span>,</span>
+<span class="line"><span class="line-num">69</span>      userEmail: data[<span class="str">'userEmail'</span>] ?? <span class="str">''</span>,</span>
+<span class="line"><span class="line-num">70</span>      lastMessage: data[<span class="str">'lastMessage'</span>] ?? <span class="str">''</span>,</span>
+<span class="line"><span class="line-num">71</span>      lastMessageTime: (data[<span class="str">'lastMessageTime'</span>] <span class="kw">as</span> <span class="cls">Timestamp</span>?)?.toDate() ?? <span class="cls">DateTime</span>.now(),</span>
+<span class="line"><span class="line-num">72</span>      isReadByAdmin: data[<span class="str">'isReadByAdmin'</span>] ?? <span class="kw">true</span>,</span>
+<span class="line"><span class="line-num">73</span>      isReadByUser: data[<span class="str">'isReadByUser'</span>] ?? <span class="kw">true</span>,</span>
+<span class="line"><span class="line-num">74</span>      userAvatar: data[<span class="str">'userAvatar'</span>],</span>
+<span class="line"><span class="line-num">75</span>    );</span>
+<span class="line"><span class="line-num">76</span>  }</span>
+<span class="line"><span class="line-num">77</span>}</span></pre>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
