@@ -65,7 +65,7 @@
     <td align="center"><img src="assets/screenshots/GiaoDienThanhToan.png" width="200"/><br/><b>Thanh Toán</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/screenshots/GiaoDienPhuongThucTT.png" width="200"/><br/><b>Phương Thức TT</b></td>
+    <td align="center"><img src="assets/screenshots/GiaoDienPhuongThucTT.png" width="200"/><br/><b>Phương Thức Thanh Toán</b></td>
     <td align="center"><img src="assets/screenshots/GiaoDienXemDonHang.png" width="200"/><br/><b>Xem Đơn Hàng</b></td>
     <td align="center"><img src="assets/screenshots/GiadienChucNangChat.png" width="200"/><br/><b>Chat Hỗ Trợ</b></td>
   </tr>
