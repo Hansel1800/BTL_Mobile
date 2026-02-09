@@ -118,7 +118,7 @@
 |-----------|-------|
 | **📊 Dashboard** | Tổng quan doanh thu, đơn hàng, sản phẩm bán chạy |
 | **📦 Product Management** | CRUD sản phẩm với variants (size/color/price/stock) |
-| **🖼️ Image Upload** | Upload ảnh sản phẩm lên Firebase Storage |
+| **🖼️ Image URL Upload** | Upload ảnh sản phẩm bằng định dạng Base64, Link URL ảnh |
 | **📋 Order Management** | Xem, cập nhật trạng thái đơn hàng |
 | **👥 User Management** | Quản lý người dùng, xem chi tiết, lịch sử mua hàng |
 | **🎫 Voucher Management** | Tạo/quản lý mã giảm giá với điều kiện |
