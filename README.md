@@ -403,8 +403,7 @@ lib/
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/your-username/fashion-ecommerce-app.git
-cd fashion-ecommerce-app
+git clone https://github.com/HansoHand/BTL_Mobile.git
 ```
 
 ### 2. Install Dependencies
@@ -487,7 +486,7 @@ flutter test integration_test/app_test.dart
 
 ## 📄 License
 
-This project is for educational purposes.
+This project is for personal project.
 
 ---
 
