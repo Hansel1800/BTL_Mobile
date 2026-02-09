@@ -486,7 +486,7 @@ flutter test integration_test/app_test.dart
 
 ## 📄 License
 
-This project is for personal project.
+This project is a personal project.
 
 ---
 
