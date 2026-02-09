@@ -2,7 +2,7 @@
   <img src="assets/icon/logo_app.png" alt="Fashion Store Logo" width="120"/>
 </p>
 
-<h1 align="center">🛍️ Fashion E-Commerce App</h1>
+<h1 align="center">🛍️ Fashion E-Commerce App & Admin Dashboard</h1>
 
 <p align="center">
   <strong>Ứng dụng thương mại điện tử thời trang đầy đủ tính năng được xây dựng bằng Flutter & Firebase</strong>
